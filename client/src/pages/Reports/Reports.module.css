@@ -1,0 +1,405 @@
+/* Relatórios - Cyberpunk Style */
+.container {
+	display: flex;
+	flex-direction: column;
+	gap: var(--spacing-xl);
+	padding-bottom: var(--spacing-2xl);
+}
+
+.header {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	flex-wrap: wrap;
+	gap: var(--spacing-md);
+	background: rgba(0, 0, 0, 0.4);
+	padding: var(--spacing-md);
+	border-radius: var(--border-radius-lg);
+	border: 1px solid var(--border-color);
+}
+
+.title {
+	font-family: var(--font-family);
+	font-size: var(--font-size-xl);
+	font-weight: 700;
+	color: var(--neon-blue);
+	text-transform: uppercase;
+	letter-spacing: 1px;
+}
+
+.filters {
+	display: flex;
+	gap: var(--spacing-sm);
+	align-items: center;
+	flex-wrap: wrap;
+}
+
+.dateInput {
+	padding: var(--spacing-sm) var(--spacing-md);
+	border: 1px solid var(--border-color);
+	border-radius: var(--border-radius-md);
+	font-family: var(--font-mono);
+	font-size: var(--font-size-sm);
+	background: rgba(0, 0, 0, 0.5);
+	color: var(--text-primary);
+	text-transform: uppercase;
+}
+
+.dateInput::-webkit-calendar-picker-indicator {
+	filter: invert(1);
+	cursor: pointer;
+}
+
+.actions {
+	display: flex;
+	gap: var(--spacing-sm);
+	align-items: center;
+}
+
+.exportButton {
+	padding: var(--spacing-sm) var(--spacing-lg);
+	background: rgba(0, 255, 157, 0.1);
+	color: var(--neon-green);
+	border: 1px solid var(--neon-green);
+	border-radius: var(--border-radius-md);
+	font-family: var(--font-mono);
+	font-weight: 600;
+	cursor: pointer;
+	text-transform: uppercase;
+	transition: all var(--transition-fast);
+	display: flex;
+	align-items: center;
+	gap: var(--spacing-xs);
+}
+
+.exportButton:hover {
+	background: var(--neon-green);
+	color: #000;
+	box-shadow: 0 0 15px rgba(0, 255, 157, 0.4);
+}
+
+.clearButton {
+	padding: var(--spacing-sm) var(--spacing-lg);
+	background: rgba(255, 42, 109, 0.1);
+	color: var(--danger-500);
+	border: 1px solid var(--danger-500);
+	border-radius: var(--border-radius-md);
+	font-family: var(--font-mono);
+	font-weight: 600;
+	cursor: pointer;
+	text-transform: uppercase;
+	transition: all var(--transition-fast);
+	display: flex;
+	align-items: center;
+	gap: var(--spacing-xs);
+}
+
+.clearButton:hover {
+	background: var(--danger-500);
+	color: #fff;
+	box-shadow: 0 0 15px rgba(255, 42, 109, 0.4);
+}
+
+.filterButton {
+	padding: var(--spacing-sm) var(--spacing-lg);
+	background: rgba(0, 243, 255, 0.1);
+	color: var(--neon-blue);
+	border: 1px solid var(--neon-blue);
+	border-radius: var(--border-radius-md);
+	font-family: var(--font-mono);
+	font-weight: 600;
+	cursor: pointer;
+	text-transform: uppercase;
+	transition: all var(--transition-fast);
+}
+
+.filterButton:hover {
+	background: var(--neon-blue);
+	color: #000;
+	box-shadow: 0 0 15px rgba(0, 243, 255, 0.4);
+}
+
+/* Summary Cards */
+.summaryGrid {
+	display: grid;
+	grid-template-columns: repeat(4, 1fr);
+	gap: var(--spacing-md);
+}
+
+.summaryCard {
+	background: rgba(20, 20, 25, 0.8);
+	border-radius: var(--border-radius-lg);
+	padding: var(--spacing-lg);
+	box-shadow: var(--shadow-sm);
+	border: 1px solid var(--border-color);
+	backdrop-filter: blur(5px);
+	transition: all var(--transition-fast);
+	position: relative;
+	overflow: hidden;
+}
+
+.summaryCard:hover {
+	border-color: var(--neon-blue);
+	box-shadow: 0 0 20px rgba(0, 243, 255, 0.1);
+	transform: translateY(-2px);
+}
+
+.summaryLabel {
+	font-family: var(--font-mono);
+	font-size: var(--font-size-sm);
+	color: var(--text-secondary);
+	margin-bottom: var(--spacing-xs);
+	text-transform: uppercase;
+	letter-spacing: 1px;
+}
+
+.summaryValue {
+	font-family: var(--font-mono);
+	font-size: var(--font-size-2xl);
+	font-weight: 700;
+	color: var(--text-primary);
+	text-shadow: 0 0 5px rgba(255, 255, 255, 0.2);
+}
+
+.summaryValueGreen {
+	color: var(--neon-green);
+	text-shadow: 0 0 10px rgba(0, 255, 157, 0.4);
+}
+
+.summaryValueRed {
+	color: var(--danger-500);
+	text-shadow: 0 0 10px rgba(255, 42, 109, 0.4);
+}
+
+.summaryValueBlue {
+	color: var(--neon-blue);
+	text-shadow: 0 0 10px rgba(0, 243, 255, 0.4);
+}
+
+.summaryPercent {
+	font-family: var(--font-mono);
+	font-size: var(--font-size-xs);
+	color: var(--text-muted);
+	margin-top: var(--spacing-xs);
+	display: block;
+}
+
+/* Sections */
+.sectionsGrid {
+	display: grid;
+	grid-template-columns: 1fr 1fr;
+	gap: var(--spacing-lg);
+}
+
+.section {
+	background: rgba(20, 20, 25, 0.8);
+	border-radius: var(--border-radius-lg);
+	padding: var(--spacing-lg);
+	box-shadow: var(--shadow-sm);
+	border: 1px solid var(--border-color);
+	backdrop-filter: blur(5px);
+}
+
+.sectionTitle {
+	font-family: var(--font-family);
+	font-size: var(--font-size-lg);
+	font-weight: 700;
+	margin-bottom: var(--spacing-lg);
+	padding-bottom: var(--spacing-md);
+	border-bottom: 1px solid var(--border-color);
+	color: var(--neon-pink);
+	text-transform: uppercase;
+	letter-spacing: 1px;
+}
+
+/* Top Products */
+.productsList {
+	display: flex;
+	flex-direction: column;
+	gap: var(--spacing-sm);
+}
+
+.productItem {
+	display: flex;
+	align-items: center;
+	gap: var(--spacing-md);
+	padding: var(--spacing-sm) var(--spacing-md);
+	background: rgba(255, 255, 255, 0.03);
+	border-radius: var(--border-radius-md);
+	border: 1px solid transparent;
+	transition: all var(--transition-fast);
+}
+
+.productItem:hover {
+	background: rgba(255, 255, 255, 0.05);
+	border-color: var(--neon-blue);
+}
+
+.productRank {
+	width: 28px;
+	height: 28px;
+	background: rgba(0, 243, 255, 0.1);
+	color: var(--neon-blue);
+	border: 1px solid var(--neon-blue);
+	border-radius: 50%;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	font-family: var(--font-mono);
+	font-weight: 700;
+	font-size: var(--font-size-sm);
+}
+
+.productInfo {
+	flex: 1;
+}
+
+.productName {
+	font-family: var(--font-mono);
+	font-weight: 600;
+	font-size: var(--font-size-sm);
+	color: var(--text-primary);
+	text-transform: uppercase;
+}
+
+.productQuantity {
+	font-size: var(--font-size-xs);
+	color: var(--text-secondary);
+	font-family: var(--font-mono);
+}
+
+.productRevenue {
+	font-family: var(--font-mono);
+	font-weight: 700;
+	color: var(--neon-green);
+	text-shadow: 0 0 5px rgba(0, 255, 157, 0.3);
+}
+
+/* Daily Chart */
+.dailyList {
+	display: flex;
+	flex-direction: column;
+	max-height: 350px;
+	overflow-y: auto;
+	border: 1px solid var(--border-color);
+	border-radius: var(--border-radius-md);
+}
+
+.dailyItem {
+	display: grid;
+	grid-template-columns: 100px 1fr 1fr 1fr;
+	gap: var(--spacing-sm);
+	padding: var(--spacing-sm) var(--spacing-md);
+	font-size: var(--font-size-sm);
+	font-family: var(--font-mono);
+	border-bottom: 1px solid var(--border-color);
+	color: var(--text-secondary);
+}
+
+.dailyItem:last-child {
+	border-bottom: none;
+}
+
+.dailyHeader {
+	font-weight: 700;
+	background: rgba(0, 243, 255, 0.1);
+	color: var(--neon-blue);
+	text-transform: uppercase;
+	font-size: var(--font-size-xs);
+	position: sticky;
+	top: 0;
+	z-index: 10;
+}
+
+.loading,
+.emptyState {
+	padding: var(--spacing-xl);
+	text-align: center;
+	color: var(--text-secondary);
+	font-family: var(--font-mono);
+	text-transform: uppercase;
+}
+
+.dayGroup {
+	border-bottom: 1px solid var(--border-color);
+}
+
+.dayGroup:last-child {
+	border-bottom: none;
+}
+
+.dailySummaryRow {
+	border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+	background: rgba(255, 255, 255, 0.02);
+}
+
+.dayDate {
+	font-weight: 700;
+	color: var(--neon-blue);
+}
+
+.profitPositive {
+	color: var(--neon-green) !important;
+	text-shadow: 0 0 5px rgba(0, 255, 157, 0.2);
+}
+
+.profitNegative {
+	color: var(--danger-500) !important;
+	text-shadow: 0 0 5px rgba(255, 42, 109, 0.2);
+}
+
+.orderBreakdown {
+	padding: var(--spacing-sm) var(--spacing-md) var(--spacing-md);
+	background: rgba(0, 0, 0, 0.2);
+}
+
+.breakdownHeader {
+	display: grid;
+	grid-template-columns: 1.5fr 1fr 1fr 1fr;
+	gap: var(--spacing-sm);
+	font-size: 10px;
+	text-transform: uppercase;
+	color: var(--text-muted);
+	border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+	padding-bottom: 4px;
+	margin-bottom: 6px;
+}
+
+.orderRow {
+	display: grid;
+	grid-template-columns: 1.5fr 1fr 1fr 1fr;
+	gap: var(--spacing-sm);
+	font-size: 11px;
+	color: var(--text-secondary);
+	padding: 2px 0;
+}
+
+.orderRow:hover {
+	color: var(--text-primary);
+}
+
+@media (max-width: 1024px) {
+	.summaryGrid {
+		grid-template-columns: repeat(2, 1fr);
+	}
+
+	.sectionsGrid {
+		grid-template-columns: 1fr;
+	}
+}
+
+@media (max-width: 640px) {
+	.summaryGrid {
+		grid-template-columns: 1fr;
+	}
+
+	.dailyItem {
+		grid-template-columns: 1fr 1fr;
+		gap: var(--spacing-xs);
+	}
+
+	.breakdownHeader,
+	.orderRow {
+		grid-template-columns: 1fr 1fr;
+	}
+}

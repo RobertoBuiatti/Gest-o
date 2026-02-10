@@ -1,0 +1,196 @@
+// Prisma Schema - ERP Gestão de Restaurante
+// Versão SQLite para desenvolvimento local
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// ==================== AUTENTICAÇÃO ====================
+
+model User {
+  id        String   @id @default(uuid())
+  name      String
+  email     String   @unique
+  password  String
+  role      String   @default("WAITER")
+  isActive  Boolean  @default(true)
+  orders    Order[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// ==================== CATEGORIAS ====================
+
+model Category {
+  id          String       @id @default(uuid())
+  name        String       @unique
+  type        String       // INGREDIENT ou PRODUCT
+  description String?
+  ingredients Ingredient[]
+  products    Product[]
+  isActive    Boolean      @default(true)
+  createdAt   DateTime     @default(now())
+}
+
+// ==================== INSUMOS E ESTOQUE ====================
+
+model Ingredient {
+  id           String         @id @default(uuid())
+  name         String
+  unit         String
+  costPrice    Float
+  minStock     Float
+  categoryId   String
+  category     Category       @relation(fields: [categoryId], references: [id])
+  stockBalance StockBalance[]
+  recipes      Recipe[]
+  movements    StockMovement[]
+  isActive     Boolean        @default(true)
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+}
+
+model StockSector {
+  id            String          @id @default(uuid())
+  name          String          @unique
+  description   String?
+  stockBalance  StockBalance[]
+  products      Product[]
+  fromMovements StockMovement[] @relation("FromSector")
+  toMovements   StockMovement[] @relation("ToSector")
+  createdAt     DateTime        @default(now())
+}
+
+model StockBalance {
+  id           String      @id @default(uuid())
+  ingredientId String
+  sectorId     String
+  quantity     Float
+  ingredient   Ingredient  @relation(fields: [ingredientId], references: [id])
+  sector       StockSector @relation(fields: [sectorId], references: [id])
+  updatedAt    DateTime    @updatedAt
+
+  @@unique([ingredientId, sectorId])
+}
+
+model StockMovement {
+  id           String       @id @default(uuid())
+  ingredientId String
+  ingredient   Ingredient   @relation(fields: [ingredientId], references: [id])
+  fromSectorId String?
+  fromSector   StockSector? @relation("FromSector", fields: [fromSectorId], references: [id])
+  toSectorId   String?
+  toSector     StockSector? @relation("ToSector", fields: [toSectorId], references: [id])
+  quantity     Float
+  type         String       // ENTRY, EXIT, TRANSFER, ADJUSTMENT, LOSS
+  reason       String?
+  createdAt    DateTime     @default(now())
+}
+
+// ==================== FICHA TÉCNICA / PRODUTOS ====================
+
+model Product {
+  id          String      @id @default(uuid())
+  name        String
+  description String?
+  salePrice   Float
+  imageUrl    String?
+  isActive    Boolean     @default(true)
+  categoryId  String
+  sectorId    String
+  category    Category    @relation(fields: [categoryId], references: [id])
+  sector      StockSector @relation(fields: [sectorId], references: [id])
+  recipes     Recipe[]
+  orderItems  OrderItem[]
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+}
+
+model Recipe {
+  id           String     @id @default(uuid())
+  productId    String
+  ingredientId String
+  quantity     Float
+  product      Product    @relation(fields: [productId], references: [id], onDelete: Cascade)
+  ingredient   Ingredient @relation(fields: [ingredientId], references: [id])
+  unit         String     @default("un")
+
+  @@unique([productId, ingredientId])
+}
+
+// ==================== PEDIDOS ====================
+
+model Order {
+  id            String        @id @default(uuid())
+  orderNumber   Int?
+  status        String        @default("PENDING")
+  type          String
+  tableNumber   Int?
+  customerName  String?
+  customerPhone String?
+  subtotal      Float
+  discount      Float         @default(0)
+  total         Float
+  notes         String?
+  userId        String
+  user          User          @relation(fields: [userId], references: [id])
+  items         OrderItem[]
+  transactions  Transaction[]
+  ifoodOrderId  String?       @unique
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+}
+
+model OrderItem {
+  id        String  @id @default(uuid())
+  orderId   String
+  productId String
+  quantity  Int
+  unitPrice Float
+  notes     String?
+  order     Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  product   Product @relation(fields: [productId], references: [id])
+}
+
+// ==================== FINANCEIRO ====================
+
+model Transaction {
+  id          String   @id @default(uuid())
+  type        String   // INCOME, EXPENSE, TRANSFER
+  amount      Float
+  fee         Float    @default(0)
+  netAmount   Float
+  description String
+  orderId     String?
+  order       Order?   @relation(fields: [orderId], references: [id])
+  paymentId   String?  @unique
+  category    String?
+  createdAt   DateTime @default(now())
+}
+
+model FixedCost {
+  id        String   @id @default(uuid())
+  name      String
+  amount    Float
+  dueDay    Int
+  category  String?
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model CashRegister {
+  id            String    @id @default(uuid())
+  openingAmount Float
+  closingAmount Float?
+  openedAt      DateTime  @default(now())
+  closedAt      DateTime?
+  openedBy      String
+  closedBy      String?
+  notes         String?
+}

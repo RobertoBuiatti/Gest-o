@@ -1,0 +1,28 @@
+// Agregador de rotas
+import { Router } from "express";
+import authRoutes from "./auth.routes";
+import orderRoutes from "./order.routes";
+import stockRoutes from "./stock.routes";
+import webhookRoutes from "./webhook.routes";
+import productRoutes from "./product.routes";
+import publicRoutes from "./public.routes";
+import uploadRoutes from "./upload.routes";
+import reportRoutes from "./report.routes";
+
+const router = Router();
+
+router.use("/auth", authRoutes);
+router.use("/orders", orderRoutes);
+router.use("/stock", stockRoutes);
+router.use("/webhooks", webhookRoutes);
+router.use("/public", publicRoutes);
+router.use("/upload", uploadRoutes);
+router.use("/reports", reportRoutes);
+router.use("/", productRoutes);
+
+// Health check
+router.get("/health", (req, res) => {
+	res.json({ status: "ok", timestamp: new Date().toISOString() });
+});
+
+export default router;

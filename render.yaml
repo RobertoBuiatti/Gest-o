@@ -1,0 +1,51 @@
+databases:
+    - name: gestao-db
+      plan: free
+      databaseName: gestao
+      user: gestao_user
+
+services:
+    - type: web
+      name: gestao-api
+      runtime: node
+      plan: free
+      rootDir: api
+      buildCommand: npm install && npx prisma generate && npm run build
+      startCommand: npm start
+      envVars:
+          - key: DATABASE_URL
+            fromDatabase:
+                name: gestao-db
+                property: connectionString
+          - key: JWT_SECRET
+            generateValue: true
+          - key: MERCADOPAGO_ACCESS_TOKEN
+            sync: false
+          - key: IFOOD_CLIENT_ID
+            sync: false
+          - key: IFOOD_CLIENT_SECRET
+            sync: false
+          - key: NODE_ENV
+            value: production
+
+    - type: web
+      name: gestao-client
+      runtime: static
+      plan: free
+      rootDir: client
+      buildCommand: npm install && npm run build
+      staticPublishPath: dist
+      headers:
+          - path: /*
+            name: Cache-Control
+            value: public, max-age=31536000
+      routes:
+          - type: rewrite
+            source: /*
+            destination: /index.html
+      envVars:
+          - key: VITE_API_URL
+            fromService:
+                type: web
+                name: gestao-api
+                property: host
