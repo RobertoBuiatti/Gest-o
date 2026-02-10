@@ -25,6 +25,14 @@ export function Layout() {
 	const { user, logout } = useAuth();
 	const location = useLocation();
 	const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+	const [activeSystem, setActiveSystem] = useState(() => {
+		return localStorage.getItem("activeSystem") || "restaurante";
+	});
+
+	// Salva a preferência do sistema no localStorage
+	useEffect(() => {
+		localStorage.setItem("activeSystem", activeSystem);
+	}, [activeSystem]);
 
 	// Fecha o sidebar ao navegar em mobile
 	useEffect(() => {
@@ -53,8 +61,16 @@ export function Layout() {
 			>
 				<div className={styles.logo}>
 					<div className={styles.logoText}>Gestão ERP</div>
-					<div className={styles.logoSubtext}>
-						Sistema de Restaurante
+					<div className={styles.logoSubtextWrapper}>
+						<select
+							className={styles.systemSelect}
+							value={activeSystem}
+							onChange={(e) => setActiveSystem(e.target.value)}
+						>
+							<option value="restaurante">Restaurante</option>
+							<option value="salao">Salão de Beleza</option>
+							<option value="fazenda">Gestão de Fazendas</option>
+						</select>
 					</div>
 				</div>
 
