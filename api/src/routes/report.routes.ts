@@ -10,8 +10,12 @@ router.use(requireRole("ADMIN", "MANAGER"));
 
 router.get("/daily", reportController.dailyReport.bind(reportController));
 router.get(
-	"/top-products",
-	reportController.topProducts.bind(reportController),
+"/top-products",
+reportController.topProducts.bind(reportController),
+);
+router.get(
+"/top-services",
+reportController.topServices.bind(reportController),
 );
 router.get(
 	"/month-summary",

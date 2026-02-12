@@ -41,10 +41,25 @@ interface DailyReport {
 }
 
 export function Reports() {
-	const now = new Date();
-	const [year, setYear] = useState(now.getFullYear());
-	const [month, setMonth] = useState(now.getMonth() + 1);
-	const queryClient = useQueryClient();
+const now = new Date();
+const [year, setYear] = useState(now.getFullYear());
+const [month, setMonth] = useState(now.getMonth() + 1);
+const queryClient = useQueryClient();
+const activeSystem = localStorage.getItem("activeSystem") || "restaurante";
+const isSalon = activeSystem === "salao";
+const [editingFixedCostId, setEditingFixedCostId] = useState<string | null>(null);
+const [editingFixedCostData, setEditingFixedCostData] = useState<{name:string;amount:number;dueDay:number;isActive:boolean}>({
+name: "",
+amount: 0,
+dueDay: 1,
+isActive: true,
+});
+const [newFixedCostData, setNewFixedCostData] = useState<{name:string;amount:number;dueDay:number;isActive:boolean}>({
+name: "",
+amount: 0,
+dueDay: 1,
+isActive: true,
+});
 
 	const handleExport = async () => {
 		try {
@@ -118,19 +133,62 @@ export function Reports() {
 		},
 	);
 
-	const { data: topProducts, isLoading: loadingTop } = useQuery<TopProduct[]>(
-		{
-			queryKey: ["top-products", year, month],
-			queryFn: async () => {
-				const startDate = new Date(year, month - 1, 1).toISOString();
-				const endDate = new Date(year, month, 0).toISOString();
-				const response = await api.get(
-					`/reports/top-products?startDate=${startDate}&endDate=${endDate}`,
-				);
-				return response.data;
-			},
-		},
-	);
+const { data: fixedCosts, isLoading: loadingFixedCosts } = useQuery<any[]>({
+queryKey: ["fixed-costs", year, month],
+queryFn: async () => {
+const response = await api.get("/fixed-costs/active");
+return response.data;
+},
+});
+
+const createFixedCostMutation = useMutation({
+mutationFn: async (data: any) => {
+const { data: res } = await api.post(`/fixed-costs`, data);
+return res;
+},
+onSuccess: () => {
+queryClient.invalidateQueries({ queryKey: ["fixed-costs"] });
+queryClient.invalidateQueries({ queryKey: ["month-summary", year, month] });
+setNewFixedCostData({ name: "", amount: 0, dueDay: 1, isActive: true });
+},
+});
+
+const updateFixedCostMutation = useMutation({
+mutationFn: async ({ id, data }: any) => {
+const { data: res } = await api.put(`/fixed-costs/${id}`, data);
+return res;
+},
+onSuccess: () => {
+queryClient.invalidateQueries({ queryKey: ["fixed-costs"] });
+queryClient.invalidateQueries({ queryKey: ["month-summary", year, month] });
+setEditingFixedCostId(null);
+setEditingFixedCostData({ name: "", amount: 0, dueDay: 1, isActive: true });
+},
+});
+
+const { data: topProducts, isLoading: loadingTop } = useQuery<TopProduct[]>(
+{
+queryKey: [isSalon ? "top-services" : "top-products", year, month],
+queryFn: async () => {
+const startDate = new Date(year, month - 1, 1).toISOString();
+const endDate = new Date(year, month, 0).toISOString();
+const url = isSalon
+? `/reports/top-services?startDate=${startDate}&endDate=${endDate}`
+: `/reports/top-products?startDate=${startDate}&endDate=${endDate}`;
+const response = await api.get(url);
+const data = response.data;
+if (isSalon) {
+return (data || []).map((s: any) => ({
+productId: s.serviceId,
+productName: s.serviceName,
+quantity: s.quantity,
+revenue: s.revenue,
+}));
+}
+return data;
+},
+},
+);
 
 	const { data: dailyData, isLoading: loadingDaily } = useQuery<
 		DailyReport[]
@@ -252,27 +310,35 @@ export function Reports() {
 						</div>
 					</div>
 
-					<div className={styles.summaryCard}>
-						<div className={styles.summaryLabel}>Lucro Bruto</div>
-						<div
-							className={`${styles.summaryValue} ${styles.summaryValueGreen}`}
-						>
-							{formatCurrency(summary?.grossProfit || 0)}
-						</div>
-						<div className={styles.summaryPercent}>Após CMV</div>
-					</div>
+<div className={styles.summaryCard}>
+<div className={styles.summaryLabel}>Lucro Bruto</div>
+<div
+className={`${styles.summaryValue} ${styles.summaryValueGreen}`}
+>
+{formatCurrency(summary?.grossProfit || 0)}
+</div>
+<div className={styles.summaryPercent}>Após CMV</div>
+</div>
 
-					<div className={styles.summaryCard}>
-						<div className={styles.summaryLabel}>Lucro Líquido</div>
-						<div
-							className={`${styles.summaryValue} ${(summary?.netProfit || 0) >= 0 ? styles.summaryValueGreen : styles.summaryValueRed}`}
-						>
-							{formatCurrency(summary?.netProfit || 0)}
-						</div>
-						<div className={styles.summaryPercent}>
-							Margem: {summary?.profitMargin || 0}%
-						</div>
-					</div>
+<div className={styles.summaryCard}>
+<div className={styles.summaryLabel}>Custos Fixos</div>
+<div className={`${styles.summaryValue} ${styles.summaryValueRed}`}>
+{formatCurrency(summary?.totalFixedCosts || 0)}
+</div>
+<div className={styles.summaryPercent}>Subtraído do Lucro Bruto</div>
+</div>
+
+<div className={styles.summaryCard}>
+<div className={styles.summaryLabel}>Lucro Líquido</div>
+<div
+className={`${styles.summaryValue} ${(summary?.netProfit || 0) >= 0 ? styles.summaryValueGreen : styles.summaryValueRed}`}
+>
+{formatCurrency(summary?.netProfit || 0)}
+</div>
+<div className={styles.summaryPercent}>
+Margem: {summary?.profitMargin || 0}%
+</div>
+</div>
 				</div>
 			)}
 
@@ -282,42 +348,158 @@ export function Reports() {
 					<h2 className={styles.sectionTitle}>
 						🏆 Produtos Mais Vendidos
 					</h2>
-					{loadingTop ? (
-						<div className={styles.loading}>Carregando...</div>
-					) : topProducts && topProducts.length > 0 ? (
-						<div className={styles.productsList}>
-							{topProducts.map((product, index) => (
-								<div
-									key={product.productId}
-									className={styles.productItem}
-								>
-									<div className={styles.productRank}>
-										{index + 1}
-									</div>
-									<div className={styles.productInfo}>
-										<div className={styles.productName}>
-											{product.productName}
-										</div>
-										<div className={styles.productQuantity}>
-											{product.quantity} unidades
-										</div>
-									</div>
-									<div className={styles.productRevenue}>
-										{formatCurrency(product.revenue)}
-									</div>
-								</div>
-							))}
-						</div>
-					) : (
-						<div className={styles.emptyState}>
-							Nenhuma venda no período
-						</div>
-					)}
-				</div>
+{loadingTop ? (
+<div className={styles.loading}>Carregando...</div>
+) : topProducts && topProducts.length > 0 ? (
+<div className={styles.productsList}>
+{topProducts.map((product, index) => (
+<div
+key={product.productId}
+className={styles.productItem}
+>
+<div className={styles.productRank}>
+{index + 1}
+</div>
+<div className={styles.productInfo}>
+<div className={styles.productName}>
+{product.productName}
+</div>
+<div className={styles.productQuantity}>
+{product.quantity} unidades
+</div>
+</div>
+<div className={styles.productRevenue}>
+{formatCurrency(product.revenue)}
+</div>
+</div>
+))}
+</div>
+) : (
+<div className={styles.emptyState}>
+Nenhuma venda no período
+</div>
+)}
+</div>
 
-				{/* Daily Report */}
-				<div className={styles.section}>
-					<h2 className={styles.sectionTitle}>📅 Vendas por Dia</h2>
+{/* Fixed Costs */}
+<div className={styles.section}>
+<h2 className={styles.sectionTitle}>💸 Custos Fixos</h2>
+
+{/* Add Fixed Cost Form */}
+<div className={styles.fixedCostAdd}>
+<input
+className={styles.input}
+placeholder="Nome do custo fixo"
+value={newFixedCostData.name}
+onChange={(e) => setNewFixedCostData({ ...newFixedCostData, name: e.target.value })}
+/>
+<input
+className={styles.input}
+type="number"
+placeholder="Valor"
+value={newFixedCostData.amount}
+onChange={(e) => setNewFixedCostData({ ...newFixedCostData, amount: Number(e.target.value) })}
+/>
+<button
+className={styles.addButton}
+onClick={() =>
+createFixedCostMutation.mutate({
+name: newFixedCostData.name,
+amount: Number(newFixedCostData.amount),
+dueDay: Number(newFixedCostData.dueDay || 1),
+isActive: !!newFixedCostData.isActive,
+})
+}
+>
+Adicionar
+</button>
+</div>
+
+{loadingFixedCosts ? (
+<div className={styles.loading}>Carregando...</div>
+) : fixedCosts && fixedCosts.length > 0 ? (
+<div className={styles.fixedCostsList}>
+{fixedCosts.map((fc: any) => (
+<div key={fc.id} className={styles.fixedCostItem}>
+{editingFixedCostId === fc.id ? (
+<div className={styles.fixedCostEdit}>
+<input
+className={styles.input}
+value={editingFixedCostData.name}
+onChange={(e) =>
+setEditingFixedCostData({ ...editingFixedCostData, name: e.target.value })
+}
+/>
+<input
+className={styles.input}
+type="number"
+value={editingFixedCostData.amount}
+onChange={(e) =>
+setEditingFixedCostData({ ...editingFixedCostData, amount: Number(e.target.value) })
+}
+/>
+<label>
+<input
+type="checkbox"
+checked={editingFixedCostData.isActive}
+onChange={(e) =>
+setEditingFixedCostData({ ...editingFixedCostData, isActive: e.target.checked })
+}
+/>
+Ativo
+</label>
+<div className={styles.fixedCostActions}>
+<button
+className={styles.saveButton}
+onClick={() =>
+updateFixedCostMutation.mutate({ id: fc.id, data: editingFixedCostData })
+}
+>
+Salvar
+</button>
+<button
+className={styles.cancelButton}
+onClick={() => {
+setEditingFixedCostId(null);
+}}
+>
+Cancelar
+</button>
+</div>
+</div>
+) : (
+<div className={styles.fixedCostRow}>
+<div className={styles.fixedCostName}>{fc.name}</div>
+<div className={styles.fixedCostAmount}>{formatCurrency(fc.amount)}</div>
+<div className={styles.fixedCostActions}>
+<button
+className={styles.editButton}
+onClick={() => {
+setEditingFixedCostId(fc.id);
+setEditingFixedCostData({
+name: fc.name,
+amount: Number(fc.amount),
+dueDay: fc.dueDay || 1,
+isActive: fc.isActive ?? true,
+});
+}}
+>
+Editar
+</button>
+</div>
+</div>
+)}
+</div>
+))}
+</div>
+) : (
+<div className={styles.emptyState}>Nenhum custo fixo</div>
+)}
+</div>
+
+{/* Daily Report */}
+<div className={styles.section}>
+<h2 className={styles.sectionTitle}>📅 Vendas por Dia</h2>
 					{loadingDaily ? (
 						<div className={styles.loading}>Carregando...</div>
 					) : dailyData && dailyData.length > 0 ? (

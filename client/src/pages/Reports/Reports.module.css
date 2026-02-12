@@ -275,6 +275,113 @@
 	text-shadow: 0 0 5px rgba(0, 255, 157, 0.3);
 }
 
+/* Fixed Costs */
+.fixedCostAdd {
+  display: flex;
+  gap: var(--spacing-sm);
+  margin-bottom: var(--spacing-md);
+  align-items: center;
+}
+
+.fixedCostAdd .input {
+  padding: var(--spacing-sm);
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius-md);
+  background: rgba(0,0,0,0.4);
+  color: var(--text-primary);
+  font-family: var(--font-mono);
+}
+
+.addButton {
+  padding: var(--spacing-sm) var(--spacing-md);
+  background: rgba(0, 255, 157, 0.08);
+  color: var(--neon-green);
+  border: 1px solid var(--neon-green);
+  border-radius: var(--border-radius-md);
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.fixedCostsList {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+  margin-top: var(--spacing-sm);
+}
+
+.fixedCostItem {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--spacing-md);
+  padding: var(--spacing-sm) var(--spacing-md);
+  background: rgba(255, 255, 255, 0.02);
+  border-radius: var(--border-radius-md);
+  border: 1px solid transparent;
+}
+
+.fixedCostEdit {
+  display: flex;
+  gap: var(--spacing-sm);
+  align-items: center;
+  width: 100%;
+}
+
+.fixedCostRow {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  width: 100%;
+}
+
+.fixedCostName {
+  flex: 1;
+  font-family: var(--font-mono);
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.fixedCostAmount {
+  width: 140px;
+  text-align: right;
+  font-family: var(--font-mono);
+  font-weight: 700;
+  color: var(--neon-green);
+}
+
+.fixedCostActions {
+  display: flex;
+  gap: var(--spacing-xs);
+}
+
+.saveButton,
+.cancelButton,
+.editButton {
+  padding: 6px 10px;
+  border-radius: var(--border-radius-md);
+  border: 1px solid var(--border-color);
+  background: rgba(0,0,0,0.4);
+  color: var(--text-primary);
+  cursor: pointer;
+  font-family: var(--font-mono);
+  font-size: var(--font-size-sm);
+}
+
+.saveButton {
+  border-color: var(--neon-green);
+  color: var(--neon-green);
+}
+
+.cancelButton {
+  border-color: var(--danger-500);
+  color: var(--danger-500);
+}
+
+.editButton {
+  border-color: var(--neon-blue);
+  color: var(--neon-blue);
+}
+
 /* Daily Chart */
 .dailyList {
 	display: flex;

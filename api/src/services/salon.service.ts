@@ -197,20 +197,23 @@ class SalonService {
 
 	async updateAppointmentStatus(id: string, status: string) {
 		return prisma.$transaction(async (tx) => {
-			const appointment = await tx.appointment.update({
-				where: { id },
-				data: { status },
-				include: {
-					client: true,
-					service: {
-						include: {
-							requirements: {
-								include: { ingredient: true },
-							},
-						},
-					},
-				},
-			});
+      const appointment = await tx.appointment.update({
+        where: { id },
+        data: { status },
+        include: {
+          client: true,
+          service: {
+            include: {
+              requirements: {
+                include: { ingredient: true },
+              },
+            },
+          },
+          user: {
+            select: { id: true, name: true },
+          },
+        },
+      });
 
 			// Se o status for COMPLETED, realiza a baixa de estoque e registra transação financeira
 			if (status === "COMPLETED") {

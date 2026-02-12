@@ -70,37 +70,61 @@ export class OrderService {
 			};
 		});
 
-		// Busca último número de pedido
-		const lastOrder = await prisma.order.findFirst({
-			orderBy: { orderNumber: "desc" },
-		});
-		const nextOrderNumber = (lastOrder?.orderNumber || 0) + 1;
+    // Validar se o usuário existe antes de criar o pedido
+    const userExists = await prisma.user.findUnique({
+      where: { id: input.userId },
+    });
 
-		const order = await prisma.order.create({
-			data: {
-				orderNumber: nextOrderNumber,
-				type: input.type,
-				tableNumber: input.tableNumber,
-				customerName: input.customerName,
-				customerPhone: input.customerPhone,
-				notes: input.notes,
-				subtotal,
-				total: subtotal,
-				userId: input.userId,
-				items: {
-					create: orderItems,
-				},
-				system: getSystemContext(),
-			},
-			include: {
-				items: {
-					include: { product: true },
-				},
-				user: {
-					select: { id: true, name: true },
-				},
-			},
-		});
+    if (!userExists) {
+      throw new Error(
+        `Usuário não encontrado (ID: ${input.userId}). Faça logout e login novamente.`,
+      );
+    }
+
+    // Busca último número de pedido
+    const lastOrder = await prisma.order.findFirst({
+      orderBy: { orderNumber: "desc" },
+    });
+    const nextOrderNumber = (lastOrder?.orderNumber || 0) + 1;
+
+    let order;
+    try {
+      order = await prisma.order.create({
+        data: {
+          orderNumber: nextOrderNumber,
+          type: input.type,
+          tableNumber: input.tableNumber,
+          customerName: input.customerName,
+          customerPhone: input.customerPhone,
+          notes: input.notes,
+          subtotal,
+          total: subtotal,
+          userId: input.userId,
+          items: {
+            create: orderItems,
+          },
+          system: getSystemContext(),
+        },
+        include: {
+          items: {
+            include: { product: true },
+          },
+          user: {
+            select: { id: true, name: true },
+          },
+        },
+      });
+    } catch (error: any) {
+      if (error.code === "P2003") {
+        Logger.error(
+          `FK violation ao criar pedido. userId: ${input.userId}, system: ${getSystemContext()}`,
+        );
+        throw new Error(
+          "Erro de referência ao criar pedido. Faça logout e login novamente.",
+        );
+      }
+      throw error;
+    }
 
 		// Baixa de estoque IMEDIATA (para evitar double spending)
 		const deductionResult = await stockDeductionService.deductByOrder(
@@ -282,60 +306,105 @@ export class OrderService {
 		return this.updateStatus(id, "CANCELLED");
 	}
 
-	async getMetrics(startDate: Date, endDate: Date) {
-		const orders = await prisma.order.findMany({
-			where: {
-				status: "PAID",
-				createdAt: { gte: startDate, lte: endDate },
-				system: getSystemContext(),
-			},
-			include: {
-				items: {
-					include: {
-						product: {
-							include: {
-								recipes: {
-									include: { ingredient: true },
-								},
-							},
-						},
-					},
-				},
-			},
-		});
+async getMetrics(startDate: Date, endDate: Date) {
+const context = getSystemContext();
 
-		const totalOrders = orders.length;
-		const totalRevenue = orders.reduce(
-			(sum, o) => sum + Number(o.total),
-			0,
-		);
-		const averageTicket = totalOrders > 0 ? totalRevenue / totalOrders : 0;
+// Restaurante: mantém comportamento anterior (pedidos PAID)
+if (context !== "salao") {
+const orders = await prisma.order.findMany({
+where: {
+status: "PAID",
+createdAt: { gte: startDate, lte: endDate },
+system: context,
+},
+include: {
+items: {
+include: {
+product: {
+include: {
+recipes: {
+include: { ingredient: true },
+},
+},
+},
+},
+},
+},
+});
 
-		// Calcula CMV (Custo de Mercadoria Vendida)
-		let totalCost = 0;
-		for (const order of orders) {
-			for (const item of order.items) {
-				for (const recipe of item.product.recipes) {
-					const ingredientCost =
-						Number(recipe.quantity) *
-						Number(recipe.ingredient.costPrice);
-					totalCost += ingredientCost * item.quantity;
-				}
-			}
-		}
+const totalOrders = orders.length;
+const totalRevenue = orders.reduce((sum, o) => sum + Number(o.total), 0);
+const averageTicket = totalOrders > 0 ? totalRevenue / totalOrders : 0;
 
-		const cmv = totalRevenue > 0 ? (totalCost / totalRevenue) * 100 : 0;
-		const margin = 100 - cmv;
+// Calcula CMV (Custo de Mercadoria Vendida)
+let totalCost = 0;
+for (const order of orders) {
+for (const item of order.items) {
+for (const recipe of item.product.recipes) {
+const ingredientCost = Number(recipe.quantity) * Number(recipe.ingredient.costPrice);
+totalCost += ingredientCost * item.quantity;
+}
+}
+}
 
-		return {
-			totalOrders,
-			totalRevenue,
-			averageTicket,
-			totalCost,
-			cmv: cmv.toFixed(2),
-			margin: margin.toFixed(2),
-		};
-	}
+const cmv = totalRevenue > 0 ? (totalCost / totalRevenue) * 100 : 0;
+const margin = 100 - cmv;
+
+return {
+totalOrders,
+totalRevenue,
+averageTicket,
+totalCost,
+cmv: cmv.toFixed(2),
+margin: margin.toFixed(2),
+};
+}
+
+// Salão: calcular a partir de appointments COMPLETED
+const appointments = await prisma.appointment.findMany({
+where: {
+system: context,
+status: "COMPLETED",
+date: { gte: startDate, lte: endDate },
+},
+include: {
+service: {
+include: {
+requirements: {
+include: { ingredient: true },
+},
+},
+},
+},
+});
+
+const totalOrders = appointments.length;
+const totalRevenue = appointments.reduce((sum, a) => sum + Number(a.service?.price || 0), 0);
+const averageTicket = totalOrders > 0 ? totalRevenue / totalOrders : 0;
+
+// Calcula CMV baseado em requirements dos serviços
+let totalCost = 0;
+for (const a of appointments) {
+const requirements = a.service?.requirements || [];
+for (const req of requirements) {
+const qtyUsed = Number(req.quantity || 0);
+const ingredientCost = qtyUsed * Number(req.ingredient?.costPrice || 0);
+totalCost += ingredientCost;
+}
+}
+
+const cmv = totalRevenue > 0 ? (totalCost / totalRevenue) * 100 : 0;
+const margin = 100 - cmv;
+
+return {
+totalOrders,
+totalRevenue,
+averageTicket,
+totalCost,
+cmv: cmv.toFixed(2),
+margin: margin.toFixed(2),
+};
+}
 
 	async clearAll() {
 		return prisma.$transaction([

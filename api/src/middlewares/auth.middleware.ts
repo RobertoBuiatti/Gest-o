@@ -17,10 +17,10 @@ interface JwtPayload {
 	role: string;
 }
 
-export function authMiddleware(
-	req: AuthRequest,
-	res: Response,
-	next: NextFunction,
+export async function authMiddleware(
+  req: AuthRequest,
+  res: Response,
+  next: NextFunction,
 ) {
 	const authHeader = req.headers.authorization;
 
@@ -30,22 +30,33 @@ export function authMiddleware(
 
 	const [, token] = authHeader.split(" ");
 
-	try {
-		const decoded = jwt.verify(
-			token,
-			process.env.JWT_SECRET || "default-secret",
-		) as JwtPayload;
+  try {
+    const decoded = jwt.verify(
+      token,
+      process.env.JWT_SECRET || "default-secret",
+    ) as JwtPayload;
 
-		req.user = {
-			id: decoded.userId,
-			email: decoded.email,
-			role: decoded.role,
-		};
+    // Verificar se o usuário ainda existe no banco
+    const user = await prisma.user.findUnique({
+      where: { id: decoded.userId },
+    });
 
-		return next();
-	} catch (error) {
-		return res.status(401).json({ error: "Token inválido" });
-	}
+    if (!user) {
+      return res
+        .status(401)
+        .json({ error: "Usuário não encontrado. Faça login novamente." });
+    }
+
+    req.user = {
+      id: user.id,
+      email: user.email,
+      role: user.role,
+    };
+
+    return next();
+  } catch (error) {
+    return res.status(401).json({ error: "Token inválido" });
+  }
 }
 
 // Middleware para verificar roles específicas

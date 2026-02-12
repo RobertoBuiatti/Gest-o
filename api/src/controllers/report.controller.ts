@@ -66,26 +66,47 @@ class ReportController {
 		}
 	}
 
-	async topProducts(req: Request, res: Response) {
-		try {
-			const { startDate, endDate, limit } = req.query;
+async topProducts(req: Request, res: Response) {
+try {
+const { startDate, endDate, limit } = req.query;
 
-			const start = startDate
-				? new Date(startDate as string)
-				: new Date(new Date().setDate(new Date().getDate() - 30));
-			const end = endDate ? new Date(endDate as string) : new Date();
+const start = startDate
+? new Date(startDate as string)
+: new Date(new Date().setDate(new Date().getDate() - 30));
+const end = endDate ? new Date(endDate as string) : new Date();
 
-			const products = await reportService.getTopProducts(
-				start,
-				end,
-				limit ? parseInt(limit as string) : 10,
-			);
-			return res.json(products);
-		} catch (error) {
-			console.error("Erro ao buscar top produtos:", error);
-			return res.status(500).json({ error: "Erro ao buscar produtos" });
-		}
-	}
+const products = await reportService.getTopProducts(
+start,
+end,
+limit ? parseInt(limit as string) : 10,
+);
+return res.json(products);
+} catch (error) {
+console.error("Erro ao buscar top produtos:", error);
+return res.status(500).json({ error: "Erro ao buscar produtos" });
+}
+}
+
+async topServices(req: Request, res: Response) {
+try {
+const { startDate, endDate, limit } = req.query;
+
+const start = startDate
+? new Date(startDate as string)
+: new Date(new Date().setDate(new Date().getDate() - 30));
+const end = endDate ? new Date(endDate as string) : new Date();
+
+const services = await reportService.getTopServices(
+start,
+end,
+limit ? parseInt(limit as string) : 10,
+);
+return res.json(services);
+} catch (error) {
+console.error("Erro ao buscar top serviços:", error);
+return res.status(500).json({ error: "Erro ao buscar serviços" });
+}
+}
 
 	async monthSummary(req: Request, res: Response) {
 		try {

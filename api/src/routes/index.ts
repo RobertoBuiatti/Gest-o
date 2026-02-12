@@ -9,6 +9,7 @@ import publicRoutes from "./public.routes";
 import uploadRoutes from "./upload.routes";
 import reportRoutes from "./report.routes";
 import salonRoutes from "./salon.routes";
+import fixedCostRoutes from "./fixed-cost.routes";
 
 const router = Router();
 
@@ -22,6 +23,7 @@ router.use("/webhooks", webhookRoutes);
 router.use("/public", publicRoutes);
 router.use("/upload", uploadRoutes);
 router.use("/reports", reportRoutes);
+router.use("/fixed-costs", fixedCostRoutes);
 router.use("/salon", salonRoutes);
 router.use("/", productRoutes);
 

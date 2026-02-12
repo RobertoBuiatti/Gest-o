@@ -78,7 +78,7 @@ export function Login() {
 						Credenciais de demonstração:
 					</div>
 					<div className={styles.demoCredentials}>
-						admin@gestao.com / admin123
+						admin@email.com / admin123
 					</div>
 				</div>
 			</div>
