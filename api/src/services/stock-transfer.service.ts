@@ -1,9 +1,8 @@
 // Transferência de Estoque entre Setores
 // Gerencia movimentações entre Almoxarifado, Cozinha e Bar
 
-import { PrismaClient } from "@prisma/client";
-
-const prisma = new PrismaClient();
+import { prisma } from "../config/database";
+import { getSystemContext } from "../config/context";
 
 interface TransferResult {
 	success: boolean;
@@ -46,7 +45,10 @@ export class StockTransferService {
 		try {
 			// Valida existência do ingrediente
 			const ingredient = await prisma.ingredient.findUnique({
-				where: { id: ingredientId },
+				where: {
+					id: ingredientId,
+					system: getSystemContext(),
+				},
 			});
 
 			if (!ingredient) {
@@ -55,8 +57,12 @@ export class StockTransferService {
 
 			// Valida existência dos setores
 			const [fromSector, toSector] = await Promise.all([
-				prisma.stockSector.findUnique({ where: { id: fromSectorId } }),
-				prisma.stockSector.findUnique({ where: { id: toSectorId } }),
+				prisma.stockSector.findUnique({
+					where: { id: fromSectorId, system: getSystemContext() },
+				}),
+				prisma.stockSector.findUnique({
+					where: { id: toSectorId, system: getSystemContext() },
+				}),
 			]);
 
 			if (!fromSector) {
@@ -115,6 +121,7 @@ export class StockTransferService {
 						ingredientId,
 						sectorId: toSectorId,
 						quantity,
+						system: getSystemContext(),
 					},
 				});
 
@@ -126,6 +133,7 @@ export class StockTransferService {
 						toSectorId,
 						quantity,
 						type: "TRANSFER",
+						system: getSystemContext(),
 						reason:
 							reason ||
 							`Transferência: ${fromSector.name} → ${toSector.name}`,
@@ -173,7 +181,10 @@ export class StockTransferService {
 
 		try {
 			const ingredient = await prisma.ingredient.findUnique({
-				where: { id: ingredientId },
+				where: {
+					id: ingredientId,
+					system: getSystemContext(),
+				},
 			});
 
 			if (!ingredient) {
@@ -187,7 +198,12 @@ export class StockTransferService {
 						ingredientId_sectorId: { ingredientId, sectorId },
 					},
 					update: { quantity: { increment: quantity } },
-					create: { ingredientId, sectorId, quantity },
+					create: {
+						ingredientId,
+						sectorId,
+						quantity,
+						system: getSystemContext(),
+					},
 				});
 
 				// Registra movimentação
@@ -197,6 +213,7 @@ export class StockTransferService {
 						toSectorId: sectorId,
 						quantity,
 						type: "ENTRY",
+						system: getSystemContext(),
 						reason: reason || "Entrada de compra",
 					},
 				});
@@ -248,7 +265,12 @@ export class StockTransferService {
 						ingredientId_sectorId: { ingredientId, sectorId },
 					},
 					update: { quantity: newQuantity },
-					create: { ingredientId, sectorId, quantity: newQuantity },
+					create: {
+						ingredientId,
+						sectorId,
+						quantity: newQuantity,
+						system: getSystemContext(),
+					},
 				});
 
 				// Registra movimentação
@@ -259,6 +281,7 @@ export class StockTransferService {
 						toSectorId: diff > 0 ? sectorId : null,
 						quantity: Math.abs(diff),
 						type: "ADJUSTMENT",
+						system: getSystemContext(),
 						reason,
 					},
 				});

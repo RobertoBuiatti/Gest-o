@@ -2,6 +2,7 @@
 import { convertToStockUnit, Unit } from "../utils/unit.utils";
 import Logger from "../config/logger";
 import { prisma } from "../config/database";
+import { getSystemContext } from "../config/context";
 import { stockDeductionService } from "./stock-deduction.service";
 
 interface CreateOrderInput {
@@ -25,6 +26,7 @@ export class OrderService {
 			where: {
 				id: { in: input.items.map((i) => i.productId) },
 				isActive: true,
+				system: getSystemContext(),
 			},
 			include: {
 				recipes: {
@@ -88,6 +90,7 @@ export class OrderService {
 				items: {
 					create: orderItems,
 				},
+				system: getSystemContext(),
 			},
 			include: {
 				items: {
@@ -119,8 +122,8 @@ export class OrderService {
 	}
 
 	async findById(id: string) {
-		return prisma.order.findUnique({
-			where: { id },
+		return prisma.order.findFirst({
+			where: { id, system: getSystemContext() },
 			include: {
 				items: {
 					include: { product: true },
@@ -157,6 +160,7 @@ export class OrderService {
 
 		if (status && typeof status === "string") where.status = status;
 		if (type && typeof type === "string") where.type = type;
+		where.system = getSystemContext();
 
 		if (startDate || endDate) {
 			where.createdAt = {};
@@ -205,6 +209,9 @@ export class OrderService {
 			args.push(type);
 		}
 
+		sql += ` AND "system" = ?`;
+		args.push(getSystemContext());
+
 		if (startDate) {
 			const d = new Date(startDate);
 			if (!isNaN(d.getTime())) {
@@ -251,8 +258,11 @@ export class OrderService {
 	}
 
 	async updateStatus(id: string, status: string) {
-		const order = await prisma.order.findUnique({ where: { id } });
-		if (!order) throw new Error("Pedido não encontrado");
+		const context = getSystemContext();
+		const order = await prisma.order.findFirst({
+			where: { id, system: context },
+		});
+		if (!order) throw new Error("Pedido não encontrado ou acesso negado");
 
 		// Se marcado como CANCELADO, devolve insumos para o estoque
 		if (status === "CANCELLED" && order.status !== "CANCELLED") {
@@ -277,6 +287,7 @@ export class OrderService {
 			where: {
 				status: "PAID",
 				createdAt: { gte: startDate, lte: endDate },
+				system: getSystemContext(),
 			},
 			include: {
 				items: {

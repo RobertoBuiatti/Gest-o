@@ -5,13 +5,17 @@ import { stockDeductionService } from "../services/stock-deduction.service";
 import Logger from "../config/logger";
 import { productService } from "../services/product.service";
 import { prisma } from "../config/database";
+import { getSystemContext } from "../config/context";
 
 export class StockController {
 	// Lista todos os insumos com saldo por setor
 	async listIngredients(req: Request, res: Response) {
 		try {
 			const ingredients = await prisma.ingredient.findMany({
-				where: { isActive: true },
+				where: {
+					isActive: true,
+					system: getSystemContext(),
+				},
 				include: {
 					category: true,
 					stockBalance: {
@@ -32,6 +36,7 @@ export class StockController {
 	async listSectors(req: Request, res: Response) {
 		try {
 			const sectors = await prisma.stockSector.findMany({
+				where: { system: getSystemContext() },
 				include: {
 					stockBalance: {
 						where: {
@@ -66,7 +71,11 @@ export class StockController {
 				return res.status(400).json({ error: "Nome é obrigatório" });
 
 			const sector = await prisma.stockSector.create({
-				data: { name, description },
+				data: {
+					name,
+					description,
+					system: getSystemContext(),
+				},
 			});
 			return res.json(sector);
 		} catch (error) {
@@ -294,6 +303,7 @@ export class StockController {
 				where: {
 					ingredientId: ingredientId as string,
 					type: type as any,
+					system: getSystemContext(),
 					createdAt: {
 						gte: startDate
 							? new Date(startDate as string)

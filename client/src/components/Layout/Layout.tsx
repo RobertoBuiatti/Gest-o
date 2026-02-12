@@ -3,22 +3,64 @@ import { useState, useEffect } from "react";
 import { useAuth } from "../../hooks/useAuth";
 import styles from "./Layout.module.css";
 
-const navItems = [
-	{ path: "/", label: "Dashboard", icon: "⚡" },
-	{ path: "/pdv", label: "PDV", icon: "💳" },
-	{ path: "/pedidos", label: "Pedidos", icon: "📝" },
-	{ path: "/estoque", label: "Estoque", icon: "🏭" },
-	{ path: "/produtos", label: "Produtos", icon: "🍱" },
-	{ path: "/relatorios", label: "Relatórios", icon: "💹" },
-];
-
-const pageTitles: Record<string, string> = {
-	"/": "Dashboard",
-	"/pdv": "Ponto de Venda",
-	"/pedidos": "Gestão de Pedidos",
-	"/estoque": "Controle de Stock",
-	"/produtos": "Produtos & Cardápio",
-	"/relatorios": "Relatórios Financeiros",
+const configs: Record<
+	string,
+	{ navItems: any[]; pageTitles: Record<string, string> }
+> = {
+	restaurante: {
+		navItems: [
+			{ path: "/", label: "Dashboard", icon: "⚡" },
+			{ path: "/pdv", label: "PDV", icon: "💳" },
+			{ path: "/pedidos", label: "Pedidos", icon: "📝" },
+			{ path: "/estoque", label: "Estoque", icon: "🏭" },
+			{ path: "/produtos", label: "Produtos", icon: "🍱" },
+			{ path: "/relatorios", label: "Relatórios", icon: "💹" },
+		],
+		pageTitles: {
+			"/": "Dashboard",
+			"/pdv": "Ponto de Venda",
+			"/pedidos": "Gestão de Pedidos",
+			"/estoque": "Controle de Stock",
+			"/produtos": "Produtos & Cardápio",
+			"/relatorios": "Relatórios Financeiros",
+		},
+	},
+	salao: {
+		navItems: [
+			{ path: "/", label: "Painel", icon: "📊" },
+			{ path: "/agenda", label: "Agenda", icon: "📅" },
+			{ path: "/clientes", label: "Clientes", icon: "👥" },
+			{ path: "/servicos", label: "Serviços", icon: "✂️" },
+			{ path: "/estoque", label: "Produtos", icon: "🧴" },
+			{ path: "/relatorios", label: "Financeiro", icon: "💰" },
+		],
+		pageTitles: {
+			"/": "Painel de Controle",
+			"/agenda": "Agenda & Calendário",
+			"/clientes": "Gestão de Clientes",
+			"/servicos": "Catálogo de Serviços",
+			"/estoque": "Estoque de Produtos",
+			"/relatorios": "Fluxo de Caixa",
+		},
+	},
+	fazenda: {
+		navItems: [
+			{ path: "/", label: "Overview", icon: "🚜" },
+			{ path: "/plantio", label: "Plantio", icon: "🌱" },
+			{ path: "/colheita", label: "Colheita", icon: "🌾" },
+			{ path: "/gado", label: "Pecuária", icon: "🐄" },
+			{ path: "/estoque", label: "Insumos", icon: "📦" },
+			{ path: "/relatorios", label: "Produtividade", icon: "📈" },
+		],
+		pageTitles: {
+			"/": "Painel Agrícola",
+			"/plantio": "Gestão de Safra",
+			"/colheita": "Controle de Colheita",
+			"/gado": "Manejo de Rebanho",
+			"/estoque": "Estoque de Insumos",
+			"/relatorios": "Relatórios de Produção",
+		},
+	},
 };
 
 export function Layout() {
@@ -32,6 +74,14 @@ export function Layout() {
 	// Salva a preferência do sistema no localStorage
 	useEffect(() => {
 		localStorage.setItem("activeSystem", activeSystem);
+		// Limpa o cache para garantir que os dados do sistema anterior não apareçam no novo
+		const queryClient = (window as any).queryClient;
+		if (queryClient) {
+			queryClient.invalidateQueries();
+		} else {
+			// Alternativa: recarregar a página para isolamento total se o queryClient não estiver acessível
+			window.location.reload();
+		}
 	}, [activeSystem]);
 
 	// Fecha o sidebar ao navegar em mobile
@@ -75,7 +125,7 @@ export function Layout() {
 				</div>
 
 				<nav className={styles.nav}>
-					{navItems.map((item) => (
+					{configs[activeSystem]?.navItems.map((item) => (
 						<NavLink
 							key={item.path}
 							to={item.path}
@@ -129,7 +179,9 @@ export function Layout() {
 							☰
 						</button>
 						<h1 className={styles.headerTitle}>
-							{pageTitles[location.pathname] || "Gestão"}
+							{configs[activeSystem]?.pageTitles[
+								location.pathname
+							] || "Gestão"}
 						</h1>
 					</div>
 				</header>

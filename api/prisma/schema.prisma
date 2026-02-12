@@ -20,8 +20,69 @@ model User {
   role      String   @default("WAITER")
   isActive  Boolean  @default(true)
   orders    Order[]
+  appointments Appointment[]
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+// ==================== SALÃO DE BELEZA ====================
+
+model Client {
+  id        String   @id @default(uuid())
+  name      String
+  email     String?  @unique
+  phone     String?
+  notes     String?
+  categoryId   String?
+  category     Category?    @relation(fields: [categoryId], references: [id])
+  appointments Appointment[]
+  system       String        @default("salao")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model SalonService {
+  id          String   @id @default(uuid())
+  name        String
+  description String?
+  price       Float
+  duration    Int      // em minutos
+  isActive    Boolean  @default(true)
+  categoryId  String?
+  category    Category? @relation(fields: [categoryId], references: [id])
+  appointments Appointment[]
+  requirements SalonServiceRequirement[]
+  system       String        @default("salao")
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+}
+
+model SalonServiceRequirement {
+  id             String       @id @default(uuid())
+  salonServiceId String
+  ingredientId   String
+  quantity       Float
+  unit           String?      // Unidade de medida (ex: ml, g, un)
+  service        SalonService @relation(fields: [salonServiceId], references: [id])
+  ingredient     Ingredient   @relation(fields: [ingredientId], references: [id])
+
+  @@unique([salonServiceId, ingredientId])
+}
+
+model Appointment {
+  id          String       @id @default(uuid())
+  date        DateTime
+  status      String       @default("SCHEDULED") // SCHEDULED, COMPLETED, CANCELLED, NOSHOW
+  notes       String?
+  clientId    String
+  client      Client       @relation(fields: [clientId], references: [id])
+  serviceId   String
+  service     SalonService @relation(fields: [serviceId], references: [id])
+  userId      String       // Profissional
+  user        User         @relation(fields: [userId], references: [id])
+  system      String       @default("salao")
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
 }
 
 // ==================== CATEGORIAS ====================
@@ -33,7 +94,10 @@ model Category {
   description String?
   ingredients Ingredient[]
   products    Product[]
+  salonServices SalonService[]
+  clients     Client[]
   isActive    Boolean      @default(true)
+  system      String       @default("restaurante")
   createdAt   DateTime     @default(now())
 }
 
@@ -50,7 +114,9 @@ model Ingredient {
   stockBalance StockBalance[]
   recipes      Recipe[]
   movements    StockMovement[]
+  serviceRequirements SalonServiceRequirement[]
   isActive     Boolean        @default(true)
+  system       String         @default("restaurante")
   createdAt    DateTime       @default(now())
   updatedAt    DateTime       @updatedAt
 }
@@ -63,6 +129,7 @@ model StockSector {
   products      Product[]
   fromMovements StockMovement[] @relation("FromSector")
   toMovements   StockMovement[] @relation("ToSector")
+  system        String          @default("restaurante")
   createdAt     DateTime        @default(now())
 }
 
@@ -73,6 +140,7 @@ model StockBalance {
   quantity     Float
   ingredient   Ingredient  @relation(fields: [ingredientId], references: [id])
   sector       StockSector @relation(fields: [sectorId], references: [id])
+  system       String      @default("restaurante")
   updatedAt    DateTime    @updatedAt
 
   @@unique([ingredientId, sectorId])
@@ -89,6 +157,7 @@ model StockMovement {
   quantity     Float
   type         String       // ENTRY, EXIT, TRANSFER, ADJUSTMENT, LOSS
   reason       String?
+  system       String       @default("restaurante")
   createdAt    DateTime     @default(now())
 }
 
@@ -107,6 +176,7 @@ model Product {
   sector      StockSector @relation(fields: [sectorId], references: [id])
   recipes     Recipe[]
   orderItems  OrderItem[]
+  system      String      @default("restaurante")
   createdAt   DateTime    @default(now())
   updatedAt   DateTime    @updatedAt
 }
@@ -142,6 +212,7 @@ model Order {
   items         OrderItem[]
   transactions  Transaction[]
   ifoodOrderId  String?       @unique
+  system        String        @default("restaurante")
   createdAt     DateTime      @default(now())
   updatedAt     DateTime      @updatedAt
 }
@@ -170,6 +241,7 @@ model Transaction {
   order       Order?   @relation(fields: [orderId], references: [id])
   paymentId   String?  @unique
   category    String?
+  system      String   @default("restaurante")
   createdAt   DateTime @default(now())
 }
 
@@ -180,6 +252,7 @@ model FixedCost {
   dueDay    Int
   category  String?
   isActive  Boolean  @default(true)
+  system    String   @default("restaurante")
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
@@ -192,5 +265,6 @@ model CashRegister {
   closedAt      DateTime?
   openedBy      String
   closedBy      String?
+  system        String    @default("restaurante")
   notes         String?
 }

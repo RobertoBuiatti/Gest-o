@@ -2,6 +2,7 @@ import { useQuery, useInfiniteQuery } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
 import api from "../../services/api";
 import styles from "./Dashboard.module.css";
+import { useSalon } from "../../hooks/useSalon";
 
 interface Metrics {
 	totalOrders: number;
@@ -16,16 +17,6 @@ interface CriticalItem {
 	sector: { id: string; name: string };
 	currentStock: number;
 	deficit: number;
-}
-
-interface Order {
-	id: string;
-	orderNumber?: number;
-	status: string;
-	type: string;
-	total: number;
-	tableNumber?: number;
-	createdAt: string;
 }
 
 const statusLabels: Record<string, string> = {
@@ -49,6 +40,10 @@ const statusColors: Record<string, string> = {
 import { SystemStatus } from "../../components/SystemStatus/SystemStatus";
 
 export function Dashboard() {
+	const activeSystem = localStorage.getItem("activeSystem") || "restaurante";
+	const isSalon = activeSystem === "salao";
+	const { useAppointments } = useSalon();
+
 	const { data: metrics, isLoading: metricsLoading } = useQuery<Metrics>({
 		queryKey: ["metrics"],
 		queryFn: async () => {
@@ -67,29 +62,30 @@ export function Dashboard() {
 		},
 	});
 
-	// Infinite Query for Recent Orders
-	const {
-		data: ordersData,
-		isLoading: ordersLoading,
-		fetchNextPage,
-		hasNextPage,
-		isFetchingNextPage,
-	} = useInfiniteQuery({
+	// Infinite Query for Recent Orders (Restaurant)
+	const { data: ordersData, isLoading: ordersLoading } = useInfiniteQuery({
 		queryKey: ["recent-orders-dashboard"],
+		enabled: !isSalon,
 		queryFn: async ({ pageParam = 1 }) => {
 			const response = await api.get(
 				`/orders?page=${pageParam}&limit=10`,
-			); // Increased limit for better scroll feel
+			);
 			return response.data;
 		},
 		getNextPageParam: (lastPage: any) => {
-			if (lastPage.meta.page < lastPage.meta.lastPage) {
+			if (lastPage.meta?.page < lastPage.meta?.lastPage) {
 				return lastPage.meta.page + 1;
 			}
 			return undefined;
 		},
 		initialPageParam: 1,
 	});
+
+	// Appointments Query (Salon)
+	const { data: appointments, isLoading: appointmentsLoading } =
+		useAppointments(
+			new Date().toISOString().split("T")[0], // Today
+		);
 
 	const recentOrders =
 		ordersData?.pages.flatMap((page: any) => page.data) || [];
@@ -106,27 +102,75 @@ export function Dashboard() {
 			<SystemStatus />
 			{/* Quick Actions */}
 			<div className={styles.quickActions}>
-				<Link to="/pdv" className={styles.quickActionCard}>
-					<span className={styles.quickActionIcon}>💰</span>
-					<span className={styles.quickActionLabel}>Novo Pedido</span>
-				</Link>
-				<Link to="/estoque" className={styles.quickActionCard}>
-					<span className={styles.quickActionIcon}>📦</span>
-					<span className={styles.quickActionLabel}>Estoque</span>
-				</Link>
-				<a
-					href="/cardapio"
-					target="_blank"
-					rel="noopener noreferrer"
-					className={styles.quickActionCard}
-				>
-					<span className={styles.quickActionIcon}>📱</span>
-					<span className={styles.quickActionLabel}>Cardápio QR</span>
-				</a>
-				<Link to="/produtos" className={styles.quickActionCard}>
-					<span className={styles.quickActionIcon}>🍽️</span>
-					<span className={styles.quickActionLabel}>Produtos</span>
-				</Link>
+				{isSalon ? (
+					<>
+						<Link
+							to="/salao/agenda"
+							className={styles.quickActionCard}
+						>
+							<span className={styles.quickActionIcon}>📅</span>
+							<span className={styles.quickActionLabel}>
+								Agenda
+							</span>
+						</Link>
+						<Link
+							to="/salao/clientes"
+							className={styles.quickActionCard}
+						>
+							<span className={styles.quickActionIcon}>👥</span>
+							<span className={styles.quickActionLabel}>
+								Clientes
+							</span>
+						</Link>
+						<Link
+							to="/salao/servicos"
+							className={styles.quickActionCard}
+						>
+							<span className={styles.quickActionIcon}>✂️</span>
+							<span className={styles.quickActionLabel}>
+								Serviços
+							</span>
+						</Link>
+						<Link to="/estoque" className={styles.quickActionCard}>
+							<span className={styles.quickActionIcon}>📦</span>
+							<span className={styles.quickActionLabel}>
+								Estoque
+							</span>
+						</Link>
+					</>
+				) : (
+					<>
+						<Link to="/pdv" className={styles.quickActionCard}>
+							<span className={styles.quickActionIcon}>💰</span>
+							<span className={styles.quickActionLabel}>
+								Novo Pedido
+							</span>
+						</Link>
+						<Link to="/estoque" className={styles.quickActionCard}>
+							<span className={styles.quickActionIcon}>📦</span>
+							<span className={styles.quickActionLabel}>
+								Estoque
+							</span>
+						</Link>
+						<a
+							href="/cardapio"
+							target="_blank"
+							rel="noopener noreferrer"
+							className={styles.quickActionCard}
+						>
+							<span className={styles.quickActionIcon}>📱</span>
+							<span className={styles.quickActionLabel}>
+								Cardápio QR
+							</span>
+						</a>
+						<Link to="/produtos" className={styles.quickActionCard}>
+							<span className={styles.quickActionIcon}>🍽️</span>
+							<span className={styles.quickActionLabel}>
+								Produtos
+							</span>
+						</Link>
+					</>
+				)}
 			</div>
 
 			{/* Metrics Grid */}
@@ -136,12 +180,20 @@ export function Dashboard() {
 						<div
 							className={`${styles.metricIcon} ${styles.iconBlue}`}
 						>
-							📋
+							{isSalon ? "📅" : "📋"}
 						</div>
 					</div>
-					<div className={styles.metricLabel}>Total de Pedidos</div>
+					<div className={styles.metricLabel}>
+						{isSalon ? "Agendamentos" : "Total de Pedidos"}
+					</div>
 					<div className={styles.metricValue}>
-						{metricsLoading ? "..." : metrics?.totalOrders || 0}
+						{isSalon
+							? appointmentsLoading
+								? "..."
+								: appointments?.length || 0
+							: metricsLoading
+								? "..."
+								: metrics?.totalOrders || 0}
 					</div>
 					<div className={styles.metricSubtext}>Hoje</div>
 				</div>
@@ -199,74 +251,169 @@ export function Dashboard() {
 			</div>
 
 			<div className={styles.sectionsGrid}>
-				{/* Recent Orders - Infinite Scroll */}
+				{/* Recent Activity Section */}
 				<div className={styles.section}>
-					<div className={styles.sectionHeader}>
-						<h2 className={styles.sectionTitle}>
-							🕐 Pedidos Recentes
-						</h2>
-						<Link to="/pedidos" className={styles.sectionLink}>
-							Ver todos →
-						</Link>
-					</div>
-
-					<div className={styles.ordersList} id="recent-orders-list">
-						{ordersLoading ? (
-							<div className={styles.loading}>Carregando...</div>
-						) : recentOrders && recentOrders.length > 0 ? (
-							<>
-								{recentOrders.map((order) => (
-									<div
-										key={order.id}
-										className={styles.orderItem}
-									>
-										<div className={styles.orderInfo}>
-											<span
-												className={styles.orderNumber}
-											>
-												#
-												{order.orderNumber ||
-													order.id.slice(0, 6)}
-											</span>
-											<span className={styles.orderType}>
-												{order.type === "SALAO"
-													? `Mesa ${order.tableNumber}`
-													: "🛵 Delivery"}
-											</span>
-										</div>
-										<div className={styles.orderMeta}>
-											<span
-												className={`${styles.orderStatus} ${styles[statusColors[order.status]]}`}
-											>
-												{statusLabels[order.status] ||
-													order.status}
-											</span>
-											<span className={styles.orderTotal}>
-												{formatCurrency(
-													Number(order.total),
-												)}
-											</span>
-										</div>
-									</div>
-								))}
-								{hasNextPage && (
-									<button
-										className={styles.loadMoreButton}
-										onClick={() => fetchNextPage()}
-										disabled={isFetchingNextPage}
-									>
-										{isFetchingNextPage
-											? "Carregando..."
-											: "Carregar mais"}
-									</button>
-								)}
-							</>
-						) : (
-							<div className={styles.emptyState}>
-								Nenhum pedido ainda
+					{isSalon ? (
+						<>
+							<div className={styles.sectionHeader}>
+								<h2 className={styles.sectionTitle}>
+									📅 Agenda de Hoje
+								</h2>
+								<Link
+									to="/salao/agenda"
+									className={styles.sectionLink}
+								>
+									Ver Agenda →
+								</Link>
 							</div>
-						)}
-					</div>
+							<div className={styles.ordersList}>
+								{appointmentsLoading ? (
+									<div className={styles.loading}>
+										Carregando...
+									</div>
+								) : appointments && appointments.length > 0 ? (
+									appointments.map((app: any) => (
+										<div
+											key={app.id}
+											className={styles.orderItem}
+										>
+											<div className={styles.orderInfo}>
+												<span
+													className={
+														styles.orderNumber
+													}
+												>
+													{app.client?.name ||
+														"Cliente N/A"}
+												</span>
+												<span
+													className={styles.orderType}
+												>
+													{app.service?.name ||
+														"Serviço N/A"}
+												</span>
+											</div>
+											<div className={styles.orderMeta}>
+												<span
+													className={`${styles.orderStatus} ${app.status === "COMPLETED" ? styles.success : styles.info}`}
+												>
+													{app.date
+														? new Date(
+																app.date,
+															).toLocaleTimeString(
+																[],
+																{
+																	hour: "2-digit",
+																	minute: "2-digit",
+																},
+															)
+														: "--:--"}
+												</span>
+												<span
+													className={
+														styles.orderTotal
+													}
+												>
+													R${" "}
+													{(
+														app.service?.price || 0
+													).toFixed(2)}
+												</span>
+											</div>
+										</div>
+									))
+								) : (
+									<div className={styles.emptyState}>
+										Sem agendamentos hoje
+									</div>
+								)}
+							</div>
+						</>
+					) : (
+						<>
+							<div className={styles.sectionHeader}>
+								<h2 className={styles.sectionTitle}>
+									🕐 Pedidos Recentes
+								</h2>
+								<Link
+									to="/pedidos"
+									className={styles.sectionLink}
+								>
+									Ver todos →
+								</Link>
+							</div>
+
+							<div
+								className={styles.ordersList}
+								id="recent-orders-list"
+							>
+								{ordersLoading ? (
+									<div className={styles.loading}>
+										Carregando...
+									</div>
+								) : recentOrders && recentOrders.length > 0 ? (
+									<>
+										{recentOrders.map((order) => (
+											<div
+												key={order.id}
+												className={styles.orderItem}
+											>
+												<div
+													className={styles.orderInfo}
+												>
+													<span
+														className={
+															styles.orderNumber
+														}
+													>
+														#
+														{order.orderNumber ||
+															order.id.slice(
+																0,
+																6,
+															)}
+													</span>
+													<span
+														className={
+															styles.orderType
+														}
+													>
+														{order.type === "SALAO"
+															? `Mesa ${order.tableNumber}`
+															: "🛵 Delivery"}
+													</span>
+												</div>
+												<div
+													className={styles.orderMeta}
+												>
+													<span
+														className={`${styles.orderStatus} ${styles[statusColors[order.status]]}`}
+													>
+														{statusLabels[
+															order.status
+														] || order.status}
+													</span>
+													<span
+														className={
+															styles.orderTotal
+														}
+													>
+														{formatCurrency(
+															Number(order.total),
+														)}
+													</span>
+												</div>
+											</div>
+										))}
+									</>
+								) : (
+									<div className={styles.emptyState}>
+										Nenhum pedido ainda
+									</div>
+								)}
+							</div>
+						</>
+					)}
 				</div>
 
 				{/* Critical Stock */}

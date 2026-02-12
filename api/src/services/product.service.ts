@@ -1,5 +1,5 @@
-// Service de Produtos e Categorias
 import { prisma } from "../config/database";
+import { getSystemContext } from "../config/context";
 
 interface CreateCategoryInput {
 	name: string;
@@ -36,6 +36,7 @@ class ProductService {
 		return prisma.category.findMany({
 			where: {
 				isActive: true,
+				system: getSystemContext(),
 				...(type && { type }),
 			},
 			orderBy: { name: "asc" },
@@ -56,11 +57,22 @@ class ProductService {
 				name: data.name,
 				type: data.type,
 				description: data.description,
+				system: getSystemContext(),
 			},
 		});
 	}
 
 	async updateCategory(id: string, data: Partial<CreateCategoryInput>) {
+		const context = getSystemContext();
+		// Primeiro verifica se pertence ao sistema
+		const category = await prisma.category.findFirst({
+			where: { id, system: context },
+		});
+
+		if (!category) {
+			throw new Error("Categoria não encontrada ou acesso negado");
+		}
+
 		return prisma.category.update({
 			where: { id },
 			data,
@@ -68,9 +80,10 @@ class ProductService {
 	}
 
 	async deleteCategory(id: string) {
-		// Verificar se tem produtos ou insumos ATIVOS vinculados
-		const category = await prisma.category.findUnique({
-			where: { id },
+		const context = getSystemContext();
+		// Verificar se tem produtos ou insumos ATIVOS vinculados e se pertence ao sistema
+		const category = await prisma.category.findFirst({
+			where: { id, system: context },
 			include: {
 				_count: {
 					select: {
@@ -82,7 +95,7 @@ class ProductService {
 		});
 
 		if (!category) {
-			throw new Error("Categoria não encontrada");
+			throw new Error("Categoria não encontrada ou acesso negado");
 		}
 
 		if (category._count.ingredients > 0 || category._count.products > 0) {
@@ -103,6 +116,7 @@ class ProductService {
 		return prisma.product.findMany({
 			where: {
 				isActive: true,
+				system: getSystemContext(),
 				...(categoryId && { categoryId }),
 			},
 			include: {
@@ -119,8 +133,8 @@ class ProductService {
 	}
 
 	async getProduct(id: string) {
-		return prisma.product.findUnique({
-			where: { id },
+		return prisma.product.findFirst({
+			where: { id, system: getSystemContext() },
 			include: {
 				category: true,
 				sector: true,
@@ -151,6 +165,7 @@ class ProductService {
 							})),
 						}
 					: undefined,
+				system: getSystemContext(),
 			},
 			include: {
 				category: true,
@@ -169,6 +184,16 @@ class ProductService {
 		const { recipes, ...updateData } = data;
 
 		return prisma.$transaction(async (tx) => {
+			const context = getSystemContext();
+			// Verifica se o produto pertence ao sistema
+			const existingProduct = await tx.product.findFirst({
+				where: { id, system: context },
+			});
+
+			if (!existingProduct) {
+				throw new Error("Produto não encontrado ou acesso negado");
+			}
+
 			const product = await tx.product.update({
 				where: { id },
 				data: updateData,
@@ -210,6 +235,15 @@ class ProductService {
 	}
 
 	async deleteProduct(id: string) {
+		const context = getSystemContext();
+		const product = await prisma.product.findFirst({
+			where: { id, system: context },
+		});
+
+		if (!product) {
+			throw new Error("Produto não encontrado ou acesso negado");
+		}
+
 		return prisma.product.update({
 			where: { id },
 			data: { isActive: false },
@@ -222,6 +256,7 @@ class ProductService {
 		return prisma.ingredient.findMany({
 			where: {
 				isActive: true,
+				system: getSystemContext(),
 				...(categoryId && { categoryId }),
 			},
 			include: {
@@ -250,6 +285,7 @@ class ProductService {
 					costPrice: data.costPrice,
 					minStock: data.minStock,
 					categoryId: data.categoryId,
+					system: getSystemContext(),
 				},
 				include: {
 					category: true,
@@ -262,15 +298,19 @@ class ProductService {
 				// Se não foi informado setor, busca/cria Almoxarifado
 				if (!sectorId) {
 					let sector = await tx.stockSector.findFirst({
-						where: { name: "Almoxarifado" },
+						where: {
+							name: "Almoxarifado",
+							system: getSystemContext(),
+						},
 					});
 
 					if (!sector) {
-						// Cria setor "Almoxarifado" se não existir
+						// Cria setor "Almoxarifado" se não existir para este sistema
 						sector = await tx.stockSector.create({
 							data: {
 								name: "Almoxarifado",
 								description: "Estoque central",
+								system: getSystemContext(),
 							},
 						});
 					}
@@ -283,6 +323,7 @@ class ProductService {
 						ingredientId: ingredient.id,
 						sectorId: sectorId,
 						quantity: data.initialStock,
+						system: getSystemContext(),
 					},
 				});
 
@@ -294,6 +335,7 @@ class ProductService {
 						quantity: data.initialStock,
 						type: "ENTRY",
 						reason: "Estoque Inicial",
+						system: getSystemContext(),
 					},
 				});
 			}
@@ -306,6 +348,17 @@ class ProductService {
 		id: string,
 		data: Partial<CreateIngredientInput & { isActive: boolean }>,
 	) {
+		const context = getSystemContext();
+
+		// Primeiro verifica se pertence ao sistema
+		const ingredient = await prisma.ingredient.findFirst({
+			where: { id, system: context },
+		});
+
+		if (!ingredient) {
+			throw new Error("Insumo não encontrado ou acesso negado");
+		}
+
 		return prisma.ingredient.update({
 			where: { id },
 			data,

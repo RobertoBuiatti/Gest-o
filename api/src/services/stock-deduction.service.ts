@@ -1,10 +1,6 @@
-// Baixa Automática de Estoque por Ficha Técnica
-// Este service é chamado quando um pedido é confirmado/pago
-
-import { PrismaClient } from "@prisma/client";
+import { prisma } from "../config/database";
+import { getSystemContext } from "../config/context";
 import { convertToStockUnit, Unit } from "../utils/unit.utils";
-
-const prisma = new PrismaClient();
 
 interface StockDeductionResult {
 	success: boolean;
@@ -32,8 +28,11 @@ export class StockDeductionService {
 		};
 
 		try {
-			const order = await prisma.order.findUnique({
-				where: { id: orderId },
+			const order = await prisma.order.findFirst({
+				where: {
+					id: orderId,
+					system: getSystemContext(),
+				},
 				include: {
 					items: {
 						include: {
@@ -59,6 +58,7 @@ export class StockDeductionService {
 			// Verifica se já houve baixa de estoque para este pedido
 			const existingMovements = await prisma.stockMovement.count({
 				where: {
+					system: getSystemContext(),
 					reason: {
 						startsWith: `Pedido #${order.orderNumber} -`,
 					},
@@ -101,6 +101,9 @@ export class StockDeductionService {
 							where: {
 								ingredientId: recipe.ingredientId,
 								quantity: { gt: 0 },
+								ingredient: {
+									system: getSystemContext(),
+								},
 							},
 							orderBy: [
 								// Prioriza o setor do produto, depois Almoxarifado, depois maior quantidade
@@ -115,8 +118,14 @@ export class StockDeductionService {
 
 						// Ordena manualmente para garantir a prioridade correta
 						// 1. Setor do Produto
-						// 2. Almoxarifado
+						// 2. Setor Central do Sistema (Almoxarifado ou Estoque Central Salão)
 						// 3. Outros setores (já ordenados por quantidade desc)
+						const context = getSystemContext();
+						const mainSectorName =
+							context === "salao"
+								? "Estoque Central Salão"
+								: "Almoxarifado";
+
 						const sortedBalances = allBalances.sort((a, b) => {
 							const aIsProductSector =
 								a.sectorId === item.product.sectorId;
@@ -127,11 +136,11 @@ export class StockDeductionService {
 								return -1;
 							if (!aIsProductSector && bIsProductSector) return 1;
 
-							const aIsAlmox = a.sector.name === "Almoxarifado";
-							const bIsAlmox = b.sector.name === "Almoxarifado";
+							const aIsMain = a.sector.name === mainSectorName;
+							const bIsMain = b.sector.name === mainSectorName;
 
-							if (aIsAlmox && !bIsAlmox) return -1;
-							if (!aIsAlmox && bIsAlmox) return 1;
+							if (aIsMain && !bIsMain) return -1;
+							if (!aIsMain && bIsMain) return 1;
 
 							return 0; // Mantém a ordem de quantidade desc
 						});
@@ -180,7 +189,10 @@ export class StockDeductionService {
 						if (remainingToDeduct > 0.0001) {
 							const almoxarifado = await tx.stockSector.findFirst(
 								{
-									where: { name: "Almoxarifado" },
+									where: {
+										name: "Almoxarifado",
+										system: getSystemContext(),
+									},
 								},
 							);
 
@@ -331,6 +343,7 @@ export class StockDeductionService {
 						toSectorId: targetSectorId,
 						quantity: quantityToRestore,
 						type: "ENTRY",
+						system: getSystemContext(),
 						reason: `Estorno Pedido #${order.orderNumber}`,
 					},
 				});
@@ -404,7 +417,12 @@ export class StockDeductionService {
 				} else {
 					// Busca saldo TOTAL do ingrediente em todos os setores
 					const balances = await prisma.stockBalance.findMany({
-						where: { ingredientId: recipe.ingredientId },
+						where: {
+							ingredientId: recipe.ingredientId,
+							ingredient: {
+								system: getSystemContext(),
+							},
+						},
 					});
 
 					const totalAvailable = balances.reduce(
@@ -452,6 +470,7 @@ export class StockDeductionService {
 			where: {
 				ingredient: {
 					isActive: true,
+					system: getSystemContext(),
 				},
 			},
 			include: {

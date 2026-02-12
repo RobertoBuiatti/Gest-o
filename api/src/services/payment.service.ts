@@ -1,5 +1,6 @@
 // Service de Pagamentos
 import { prisma } from "../config/database";
+import { getSystemContext } from "../config/context";
 import { mercadoPagoService } from "../integrations/mercadopago";
 import { stockDeductionService } from "./stock-deduction.service";
 
@@ -8,8 +9,18 @@ export class PaymentService {
 	 * Gera QR Code PIX para pagamento
 	 */
 	async createPixPayment(orderId: string) {
-		const order = await prisma.order.findUnique({
-			where: { id: orderId },
+		const order = await prisma.order.findFirst({
+			where: {
+				id: orderId,
+				system: getSystemContext(),
+			},
+			select: {
+				id: true,
+				total: true,
+				status: true,
+				orderNumber: true,
+				system: true,
+			},
 		});
 
 		if (!order) {
@@ -56,6 +67,14 @@ export class PaymentService {
 
 		// Transação atômica
 		await prisma.$transaction(async (tx) => {
+			// Busca o pedido para garantir o sistema correto
+			const order = await tx.order.findFirst({
+				where: {
+					id: orderId,
+					system: getSystemContext(),
+				},
+			});
+
 			// Registra transação financeira
 			await tx.transaction.create({
 				data: {
@@ -66,6 +85,7 @@ export class PaymentService {
 					description: `Pagamento PIX - Pedido`,
 					orderId,
 					paymentId: String(payment.id),
+					system: order?.system || "restaurante",
 				},
 			});
 
@@ -86,8 +106,11 @@ export class PaymentService {
 	 * Registra pagamento manual (dinheiro, cartão presencial)
 	 */
 	async registerManualPayment(orderId: string, paymentMethod: string) {
-		const order = await prisma.order.findUnique({
-			where: { id: orderId },
+		const order = await prisma.order.findFirst({
+			where: {
+				id: orderId,
+				system: getSystemContext(),
+			},
 		});
 
 		if (!order) {
@@ -104,6 +127,7 @@ export class PaymentService {
 					netAmount: order.total,
 					description: `Pagamento ${paymentMethod} - Pedido #${order.orderNumber}`,
 					orderId,
+					system: order.system,
 				},
 			});
 

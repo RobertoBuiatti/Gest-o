@@ -2,6 +2,7 @@
 import bcrypt from "bcryptjs";
 import { prisma } from "../config/database";
 import { generateToken } from "../middlewares/auth.middleware";
+import Logger from "../config/logger";
 
 interface RegisterInput {
 	name: string;
@@ -68,10 +69,16 @@ export class AuthService {
 		});
 
 		if (!user) {
+			Logger.warn(
+				`Tentativa de login falhou: Usuário não encontrado - ${input.email}`,
+			);
 			return { success: false, error: "Credenciais inválidas" };
 		}
 
 		if (!user.isActive) {
+			Logger.warn(
+				`Tentativa de login falhou: Usuário desativado - ${input.email}`,
+			);
 			return { success: false, error: "Usuário desativado" };
 		}
 
@@ -81,8 +88,13 @@ export class AuthService {
 		);
 
 		if (!validPassword) {
+			Logger.warn(
+				`Tentativa de login falhou: Senha incorreta - ${input.email}`,
+			);
 			return { success: false, error: "Credenciais inválidas" };
 		}
+
+		Logger.info(`Login realizado com sucesso: ${input.email}`);
 
 		const token = generateToken(user);
 

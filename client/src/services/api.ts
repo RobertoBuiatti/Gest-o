@@ -14,6 +14,11 @@ api.interceptors.request.use((config) => {
 	if (token) {
 		config.headers.Authorization = `Bearer ${token}`;
 	}
+
+	// Adicionar contexto do sistema
+	const system = localStorage.getItem("activeSystem") || "restaurante";
+	config.headers["x-system-context"] = system;
+
 	return config;
 });
 

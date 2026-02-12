@@ -16,6 +16,8 @@ const queryClient = new QueryClient({
 	},
 });
 
+(window as any).queryClient = queryClient;
+
 ReactDOM.createRoot(document.getElementById("root")!).render(
 	<React.StrictMode>
 		<QueryClientProvider client={queryClient}>

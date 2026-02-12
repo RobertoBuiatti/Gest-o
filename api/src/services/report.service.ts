@@ -1,5 +1,6 @@
 // Service de Relatórios Financeiros
 import { prisma } from "../config/database";
+import { getSystemContext } from "../config/context";
 
 interface OrderMarginDetail {
 	id: string;
@@ -32,21 +33,29 @@ class ReportService {
 		startDate: Date,
 		endDate: Date,
 	): Promise<DailyReport[]> {
-		const orders = await prisma.order.findMany({
+		const context = getSystemContext();
+
+		// Busca todas as transações de entrada do sistema no período
+		const transactions = await prisma.transaction.findMany({
 			where: {
-				status: { in: ["PAID", "DELIVERED"] },
+				type: "INCOME",
+				system: context,
 				createdAt: {
 					gte: startDate,
 					lte: endDate,
 				},
 			},
 			include: {
-				items: {
+				order: {
 					include: {
-						product: {
+						items: {
 							include: {
-								recipes: {
-									include: { ingredient: true },
+								product: {
+									include: {
+										recipes: {
+											include: { ingredient: true },
+										},
+									},
 								},
 							},
 						},
@@ -59,16 +68,19 @@ class ReportService {
 		// Agrupa por data
 		const reportByDate = new Map<string, DailyReport>();
 
-		for (const order of orders) {
-			const dateKey = order.createdAt.toISOString().split("T")[0];
+		for (const tx of transactions) {
+			const dateKey = tx.createdAt.toISOString().split("T")[0];
 
 			let cmv = 0;
-			for (const item of order.items) {
-				for (const recipe of item.product.recipes) {
-					cmv +=
-						Number(recipe.quantity) *
-						Number(recipe.ingredient.costPrice) *
-						item.quantity;
+			// Se a transação for de um pedido, calcula CMV
+			if (tx.order) {
+				for (const item of tx.order.items) {
+					for (const recipe of item.product.recipes) {
+						cmv +=
+							Number(recipe.quantity) *
+							Number(recipe.ingredient.costPrice) *
+							item.quantity;
+					}
 				}
 			}
 
@@ -86,18 +98,29 @@ class ReportService {
 
 			const report = reportByDate.get(dateKey)!;
 			report.totalOrders++;
-			report.totalRevenue += Number(order.total);
+			report.totalRevenue += Number(tx.amount);
 			report.totalCMV += cmv;
 			report.profit = report.totalRevenue - report.totalCMV;
 			report.averageTicket = report.totalRevenue / report.totalOrders;
 
-			report.orders.push({
-				id: order.id,
-				orderNumber: order.orderNumber || 0,
-				total: Number(order.total),
-				cmv: cmv,
-				margin: Number(order.total) - cmv,
-			});
+			if (tx.order) {
+				report.orders.push({
+					id: tx.orderId!,
+					orderNumber: tx.order.orderNumber || 0,
+					total: Number(tx.amount),
+					cmv: cmv,
+					margin: Number(tx.amount) - cmv,
+				});
+			} else {
+				// Para agendamentos ou outros ganhos sem Order atrelado
+				report.orders.push({
+					id: tx.id,
+					orderNumber: 0, // Ou algum identificador de agendamento se preferir
+					total: Number(tx.amount),
+					cmv: 0, // Agendamentos puro serviço? Ou considerar CMV de insumos se houver?
+					margin: Number(tx.amount),
+				});
+			}
 		}
 
 		return Array.from(reportByDate.values());
@@ -109,10 +132,12 @@ class ReportService {
 		endDate: Date,
 		limit = 10,
 	): Promise<ProductSales[]> {
+		const context = getSystemContext();
 		const items = await prisma.orderItem.findMany({
 			where: {
 				order: {
 					status: { in: ["PAID", "DELIVERED"] },
+					system: context,
 					createdAt: {
 						gte: startDate,
 						lte: endDate,
@@ -151,23 +176,32 @@ class ReportService {
 
 	// Resumo financeiro do mês
 	async getMonthSummary(year: number, month: number) {
+		const context = getSystemContext();
 		const startDate = new Date(year, month - 1, 1);
 		const endDate = new Date(year, month, 0, 23, 59, 59);
 
-		const orders = await prisma.order.findMany({
+		// Busca transações de entrada
+		const transactions = await prisma.transaction.findMany({
 			where: {
-				status: { in: ["PAID", "DELIVERED"] },
+				type: "INCOME",
+				system: context,
 				createdAt: {
 					gte: startDate,
 					lte: endDate,
 				},
 			},
 			include: {
-				items: {
+				order: {
 					include: {
-						product: {
+						items: {
 							include: {
-								recipes: { include: { ingredient: true } },
+								product: {
+									include: {
+										recipes: {
+											include: { ingredient: true },
+										},
+									},
+								},
 							},
 						},
 					},
@@ -176,20 +210,25 @@ class ReportService {
 		});
 
 		const fixedCosts = await prisma.fixedCost.findMany({
-			where: { isActive: true },
+			where: {
+				isActive: true,
+				system: context,
+			},
 		});
 
 		let totalRevenue = 0;
 		let totalCMV = 0;
 
-		for (const order of orders) {
-			totalRevenue += Number(order.total);
-			for (const item of order.items) {
-				for (const recipe of item.product.recipes) {
-					totalCMV +=
-						Number(recipe.quantity) *
-						Number(recipe.ingredient.costPrice) *
-						item.quantity;
+		for (const tx of transactions) {
+			totalRevenue += Number(tx.amount);
+			if (tx.order) {
+				for (const item of tx.order.items) {
+					for (const recipe of item.product.recipes) {
+						totalCMV +=
+							Number(recipe.quantity) *
+							Number(recipe.ingredient.costPrice) *
+							item.quantity;
+					}
 				}
 			}
 		}
@@ -203,7 +242,7 @@ class ReportService {
 
 		return {
 			period: `${year}-${String(month).padStart(2, "0")}`,
-			totalOrders: orders.length,
+			totalTransactions: transactions.length,
 			totalRevenue,
 			totalCMV,
 			cmvPercentage:
@@ -222,8 +261,11 @@ class ReportService {
 
 	// Dados para exportação (Todos os pedidos detalhados)
 	async getExportData(startDate: Date, endDate: Date) {
+		const context = getSystemContext();
+
 		const orders = await prisma.order.findMany({
 			where: {
+				system: context,
 				createdAt: {
 					gte: startDate,
 					lte: endDate,
@@ -249,8 +291,38 @@ class ReportService {
 			orderBy: { createdAt: "desc" },
 		});
 
-		// Busca estoque atual para todos os ingredientes
-		const allBalances = await prisma.stockBalance.findMany();
+		const appointments = await prisma.appointment.findMany({
+			where: {
+				system: context,
+				status: "COMPLETED",
+				createdAt: {
+					gte: startDate,
+					lte: endDate,
+				},
+			},
+			include: {
+				client: true,
+				service: {
+					include: {
+						category: true,
+						requirements: {
+							include: { ingredient: true },
+						},
+					},
+				},
+				user: {
+					select: { name: true },
+				},
+			},
+			orderBy: { createdAt: "desc" },
+		});
+
+		// Busca estoque atual apenas para ingredientes deste sistema
+		const allBalances = await prisma.stockBalance.findMany({
+			where: {
+				ingredient: { system: context },
+			},
+		});
 		const stockMap = new Map<string, number>();
 		for (const b of allBalances) {
 			stockMap.set(
@@ -263,50 +335,92 @@ class ReportService {
 		const top = await this.getTopProducts(startDate, endDate, 50);
 
 		return {
-			orders: orders.map((o) => {
-				let orderCMV = 0;
-				const usedIngredients: string[] = [];
+			orders: [
+				...orders.map((o) => {
+					let orderCMV = 0;
+					const usedIngredients: string[] = [];
 
-				for (const item of o.items) {
-					for (const recipe of item.product.recipes) {
-						const qtyUsed = Number(recipe.quantity) * item.quantity;
-						const cost =
-							qtyUsed * Number(recipe.ingredient.costPrice);
-						orderCMV += cost;
+					for (const item of o.items) {
+						for (const recipe of item.product.recipes) {
+							const qtyUsed =
+								Number(recipe.quantity) * item.quantity;
+							const cost =
+								qtyUsed * Number(recipe.ingredient.costPrice);
+							orderCMV += cost;
+
+							const currentStock =
+								stockMap.get(recipe.ingredientId) || 0;
+							usedIngredients.push(
+								`${recipe.ingredient.name}: ${qtyUsed.toFixed(3)}${recipe.ingredient.unit} (Estoque: ${currentStock.toFixed(3)}${recipe.ingredient.unit})`,
+							);
+						}
+					}
+
+					const total = Number(o.total);
+					const profit = total - orderCMV;
+					const marginPercent =
+						total > 0 ? ((profit / total) * 100).toFixed(1) : "0";
+
+					return {
+						ID: o.id,
+						"Nº Pedido": o.orderNumber,
+						Data: o.createdAt.toLocaleDateString("pt-BR"),
+						Hora: o.createdAt.toLocaleTimeString("pt-BR"),
+						Tipo: o.type,
+						Status: o.status,
+						Cliente: o.customerName || "N/A",
+						Subtotal: Number(o.subtotal),
+						Total: total,
+						"Custo (CMV)": orderCMV,
+						Lucro: profit,
+						"Margem %": `${marginPercent}%`,
+						Usuário: o.user.name,
+						Itens: o.items
+							.map((i) => `${i.product.name} (x${i.quantity})`)
+							.join(", "),
+						"Insumos Usados": usedIngredients.join(" | "),
+					};
+				}),
+				...appointments.map((a) => {
+					let servCMV = 0;
+					const usedIngredients: string[] = [];
+
+					for (const req of a.service.requirements) {
+						const qtyUsed = Number(req.quantity);
+						const cost = qtyUsed * Number(req.ingredient.costPrice);
+						servCMV += cost;
 
 						const currentStock =
-							stockMap.get(recipe.ingredientId) || 0;
+							stockMap.get(req.ingredientId) || 0;
 						usedIngredients.push(
-							`${recipe.ingredient.name}: ${qtyUsed.toFixed(3)}${recipe.ingredient.unit} (Estoque: ${currentStock.toFixed(3)}${recipe.ingredient.unit})`,
+							`${req.ingredient.name}: ${qtyUsed.toFixed(3)}${req.ingredient.unit} (Estoque: ${currentStock.toFixed(3)}${req.ingredient.unit})`,
 						);
 					}
-				}
 
-				const total = Number(o.total);
-				const profit = total - orderCMV;
-				const marginPercent =
-					total > 0 ? ((profit / total) * 100).toFixed(1) : "0";
+					const total = Number(a.service.price);
+					const profit = total - servCMV;
+					const marginPercent =
+						total > 0 ? ((profit / total) * 100).toFixed(1) : "0";
 
-				return {
-					ID: o.id,
-					"Nº Pedido": o.orderNumber,
-					Data: o.createdAt.toLocaleDateString("pt-BR"),
-					Hora: o.createdAt.toLocaleTimeString("pt-BR"),
-					Tipo: o.type,
-					Status: o.status,
-					Cliente: o.customerName || "N/A",
-					Subtotal: Number(o.subtotal),
-					Total: total,
-					"Custo (CMV)": orderCMV,
-					Lucro: profit,
-					"Margem %": `${marginPercent}%`,
-					Usuário: o.user.name,
-					Itens: o.items
-						.map((i) => `${i.product.name} (x${i.quantity})`)
-						.join(", "),
-					"Insumos Usados": usedIngredients.join(" | "),
-				};
-			}),
+					return {
+						ID: a.id,
+						"Nº Pedido": "AGEND-" + a.id.substring(0, 4),
+						Data: a.date.toLocaleDateString("pt-BR"),
+						Hora: a.date.toLocaleTimeString("pt-BR"),
+						Tipo: "AGENDAMENTO",
+						Status: a.status,
+						Cliente: a.client.name,
+						Subtotal: total,
+						Total: total,
+						"Custo (CMV)": servCMV,
+						Lucro: profit,
+						"Margem %": `${marginPercent}%`,
+						Usuário: a.user.name,
+						Itens: a.service.name,
+						"Insumos Usados": usedIngredients.join(" | "),
+					};
+				}),
+			],
 			daily: daily.map((d) => ({
 				Data: d.date,
 				Pedidos: d.totalOrders,
