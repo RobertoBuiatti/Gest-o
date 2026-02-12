@@ -124,4 +124,51 @@ router.post("/orders", async (req, res) => {
 	}
 });
 
+/**
+ * Rotas públicas para Salão
+ * - GET /public/salon/services -> lista serviços ativos do salão (sem autenticação)
+ * - GET /public/salon/appointments?start=ISO&end=ISO -> lista agendamentos do salão no intervalo
+ */
+router.get("/salon/services", async (req, res) => {
+  try {
+    const services = await prisma.salonService.findMany({
+      where: { isActive: true, system: "salao" },
+      include: { category: true, requirements: { include: { ingredient: true } } },
+      orderBy: { name: "asc" },
+    });
+    return res.json(services);
+  } catch (error) {
+    console.error("Erro ao buscar serviços do salão (público):", error);
+    return res.status(500).json({ error: "Erro ao buscar serviços do salão" });
+  }
+});
+
+router.get("/salon/appointments", async (req, res) => {
+  try {
+    const { start, end } = req.query;
+    const where: any = { system: "salao" };
+
+    if (start || end) {
+      where.date = {
+        ...(start ? { gte: new Date(String(start)) } : {}),
+        ...(end ? { lte: new Date(String(end)) } : {}),
+      };
+    }
+
+    const appointments = await prisma.appointment.findMany({
+      where,
+      include: {
+        client: true,
+        service: { include: { category: true } },
+      },
+      orderBy: { date: "asc" },
+    });
+
+    return res.json(appointments);
+  } catch (error) {
+    console.error("Erro ao buscar agendamentos do salão (público):", error);
+    return res.status(500).json({ error: "Erro ao buscar agendamentos do salão" });
+  }
+});
+
 export default router;

@@ -101,44 +101,55 @@ export function Dashboard() {
 		<div className={styles.dashboard}>
 			<SystemStatus />
 			{/* Quick Actions */}
-			<div className={styles.quickActions}>
-				{isSalon ? (
-					<>
-						<Link
-							to="/salao/agenda"
-							className={styles.quickActionCard}
-						>
-							<span className={styles.quickActionIcon}>📅</span>
-							<span className={styles.quickActionLabel}>
-								Agenda
-							</span>
-						</Link>
-						<Link
-							to="/salao/clientes"
-							className={styles.quickActionCard}
-						>
-							<span className={styles.quickActionIcon}>👥</span>
-							<span className={styles.quickActionLabel}>
-								Clientes
-							</span>
-						</Link>
-						<Link
-							to="/salao/servicos"
-							className={styles.quickActionCard}
-						>
-							<span className={styles.quickActionIcon}>✂️</span>
-							<span className={styles.quickActionLabel}>
-								Serviços
-							</span>
-						</Link>
-						<Link to="/estoque" className={styles.quickActionCard}>
-							<span className={styles.quickActionIcon}>📦</span>
-							<span className={styles.quickActionLabel}>
-								Estoque
-							</span>
-						</Link>
-					</>
-				) : (
+<div className={styles.quickActions}>
+{isSalon ? (
+<>
+<Link
+to="/salao/agenda"
+className={styles.quickActionCard}
+>
+<span className={styles.quickActionIcon}>📅</span>
+<span className={styles.quickActionLabel}>
+Agenda
+</span>
+</Link>
+<Link
+to="/salao/clientes"
+className={styles.quickActionCard}
+>
+<span className={styles.quickActionIcon}>👥</span>
+<span className={styles.quickActionLabel}>
+Clientes
+</span>
+</Link>
+<Link
+to="/salao/servicos"
+className={styles.quickActionCard}
+>
+<span className={styles.quickActionIcon}>✂️</span>
+<span className={styles.quickActionLabel}>
+Serviços
+</span>
+</Link>
+<a
+href="/salao"
+target="_blank"
+rel="noopener noreferrer"
+className={styles.quickActionCard}
+>
+<span className={styles.quickActionIcon}>📱</span>
+<span className={styles.quickActionLabel}>
+Menu QR
+</span>
+</a>
+<Link to="/estoque" className={styles.quickActionCard}>
+<span className={styles.quickActionIcon}>📦</span>
+<span className={styles.quickActionLabel}>
+Estoque
+</span>
+</Link>
+</>
+) : (
 					<>
 						<Link to="/pdv" className={styles.quickActionCard}>
 							<span className={styles.quickActionIcon}>💰</span>

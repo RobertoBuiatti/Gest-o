@@ -1,0 +1,182 @@
+.container {
+  font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+  padding: 24px;
+  max-width: 960px;
+  margin: 0 auto;
+  color: #222;
+}
+
+.loading {
+  text-align: center;
+  padding: 40px 0;
+}
+
+.header {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 18px;
+}
+
+.logo {
+  font-size: 20px;
+  font-weight: 700;
+}
+
+.tagline {
+  color: #666;
+  font-size: 14px;
+}
+
+.content {
+  display: grid;
+  grid-template-columns: 1fr 360px;
+  gap: 20px;
+}
+
+.categories {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 12px;
+  flex-wrap: wrap;
+}
+
+.categoryButton {
+  background: #f3f3f4;
+  border: 1px solid #e6e6e7;
+  padding: 6px 10px;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.categoryButton:hover {
+  filter: brightness(0.98);
+}
+
+.active {
+  background: #0066cc;
+  color: #fff;
+  border-color: #0066cc;
+}
+
+.servicesSection {
+  background: #fff;
+  padding: 12px;
+  border-radius: 8px;
+  border: 1px solid #f0f0f1;
+}
+
+.servicesList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.serviceItem {
+  display: flex;
+  justify-content: space-between;
+  padding: 10px;
+  border-radius: 6px;
+  border: 1px solid transparent;
+  cursor: pointer;
+}
+
+.serviceItem:hover {
+  background: #fafafa;
+}
+
+.selected {
+  border-color: #cfe8ff;
+  background: #f0f8ff;
+}
+
+.serviceInfo {
+  max-width: 70%;
+}
+
+.desc {
+  margin: 4px 0 0;
+  color: #666;
+  font-size: 13px;
+}
+
+.serviceMeta {
+  text-align: right;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  align-items: flex-end;
+  color: #333;
+}
+
+.price {
+  font-weight: 600;
+}
+
+.formSection {
+  margin-top: 12px;
+  background: #fff;
+  padding: 12px;
+  border-radius: 8px;
+  border: 1px solid #f0f0f1;
+}
+
+.formRow {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 10px;
+}
+
+.formRow label {
+  font-size: 13px;
+  color: #444;
+}
+
+.formRow input,
+.formRow textarea {
+  padding: 8px;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  font-size: 14px;
+}
+
+.actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 8px;
+}
+
+.btn {
+  background: #0066cc;
+  color: #fff;
+  border: none;
+  padding: 8px 14px;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.success {
+  text-align: center;
+  padding: 30px;
+}
+
+.icon {
+  font-size: 36px;
+  margin-bottom: 8px;
+}
+
+.footer {
+  margin-top: 18px;
+  text-align: center;
+  color: #888;
+  font-size: 13px;
+}

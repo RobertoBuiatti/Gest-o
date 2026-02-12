@@ -64,9 +64,12 @@ export function PublicMenu() {
 	const [submitting, setSubmitting] = useState(false);
 	const [orderSuccess, setOrderSuccess] = useState(false);
 
-	useEffect(() => {
-		setMenuUrl(window.location.origin + "/cardapio");
-	}, []);
+useEffect(() => {
+const system = localStorage.getItem("activeSystem") || "restaurante";
+setMenuUrl(
+  window.location.origin + (system === "salao" ? "/salao" : "/cardapio"),
+);
+}, []);
 
 	const { data, isLoading } = useQuery<MenuData>({
 		queryKey: ["public-menu"],

@@ -140,17 +140,17 @@ export function Layout() {
 					))}
 				</nav>
 
-				{/* Link do Cardápio Público */}
-				<div className={styles.qrLink}>
-					<a
-						href="/cardapio"
-						target="_blank"
-						rel="noopener noreferrer"
-						className={styles.qrButton}
-					>
-						📱 Cardápio QR
-					</a>
-				</div>
+{/* Link do Cardápio Público / Menu do Salão */}
+<div className={styles.qrLink}>
+<a
+href={activeSystem === "salao" ? "/salao" : "/cardapio"}
+target="_blank"
+rel="noopener noreferrer"
+className={styles.qrButton}
+>
+{activeSystem === "salao" ? "📱 Menu Salão QR" : "📱 Cardápio QR"}
+</a>
+</div>
 
 				<div className={styles.userSection}>
 					<div className={styles.userInfo}>
