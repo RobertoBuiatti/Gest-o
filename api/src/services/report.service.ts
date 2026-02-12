@@ -106,36 +106,79 @@ class ReportService {
         orderBy: { date: "asc" },
       });
 
-      for (const a of appointments) {
-        const dateKey = a.date.toISOString().split("T")[0];
-        const total = Number(a.service.price || 0);
-        const cmv = domain.calculateServiceCMV(a);
-        if (!reportByDate.has(dateKey)) {
-          reportByDate.set(dateKey, {
-            date: dateKey,
-            totalOrders: 0,
-            totalRevenue: 0,
-            totalCMV: 0,
-            profit: 0,
-            averageTicket: 0,
-            orders: [],
+      if (appointments.length === 0) {
+        // Fallback: usar transações INCOME caso não existam appointments COMPLETED
+        const txs = await prisma.transaction.findMany({
+          where: {
+            system: context,
+            type: "INCOME",
+            createdAt: { gte: startDate, lte: endDate },
+          },
+          orderBy: { createdAt: "asc" },
+        });
+
+        for (const t of txs) {
+          const dateKey = t.createdAt.toISOString().split("T")[0];
+          const total = Number(t.amount || 0);
+          if (!reportByDate.has(dateKey)) {
+            reportByDate.set(dateKey, {
+              date: dateKey,
+              totalOrders: 0,
+              totalRevenue: 0,
+              totalCMV: 0,
+              profit: 0,
+              averageTicket: 0,
+              orders: [],
+            });
+          }
+          const report = reportByDate.get(dateKey)!;
+          report.totalOrders++;
+          report.totalRevenue += total;
+          // Não temos CMV por transação; manter 0
+          report.profit = report.totalRevenue - report.totalCMV;
+          report.averageTicket =
+            report.totalOrders > 0 ? report.totalRevenue / report.totalOrders : 0;
+
+          report.orders.push({
+            id: t.id,
+            orderNumber: 0,
+            total,
+            cmv: 0,
+            margin: total,
           });
         }
-        const report = reportByDate.get(dateKey)!;
-        report.totalOrders++;
-        report.totalRevenue += total;
-        report.totalCMV += cmv;
-        report.profit = report.totalRevenue - report.totalCMV;
-        report.averageTicket =
-          report.totalOrders > 0 ? report.totalRevenue / report.totalOrders : 0;
+      } else {
+        for (const a of appointments) {
+          const dateKey = a.date.toISOString().split("T")[0];
+          const total = Number(a.service.price || 0);
+          const cmv = domain.calculateServiceCMV(a);
+          if (!reportByDate.has(dateKey)) {
+            reportByDate.set(dateKey, {
+              date: dateKey,
+              totalOrders: 0,
+              totalRevenue: 0,
+              totalCMV: 0,
+              profit: 0,
+              averageTicket: 0,
+              orders: [],
+            });
+          }
+          const report = reportByDate.get(dateKey)!;
+          report.totalOrders++;
+          report.totalRevenue += total;
+          report.totalCMV += cmv;
+          report.profit = report.totalRevenue - report.totalCMV;
+          report.averageTicket =
+            report.totalOrders > 0 ? report.totalRevenue / report.totalOrders : 0;
 
-        report.orders.push({
-          id: a.id,
-          orderNumber: 0,
-          total,
-          cmv,
-          margin: total - cmv,
-        });
+          report.orders.push({
+            id: a.id,
+            orderNumber: 0,
+            total,
+            cmv,
+            margin: total - cmv,
+          });
+        }
       }
     } else {
       // Restaurante: buscar pedidos PAID/DELIVERED diretamente
