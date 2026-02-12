@@ -172,25 +172,41 @@ return response.data;
 		},
 	});
 
-	const updateFixedCostMutation = useMutation({
-		mutationFn: async ({ id, data }: any) => {
-			const { data: res } = await api.put(`/fixed-costs/${id}`, data);
-			return res;
-		},
-		onSuccess: () => {
-			queryClient.invalidateQueries({ queryKey: ["fixed-costs"] });
-			queryClient.invalidateQueries({
-				queryKey: ["month-summary", year, month],
-			});
-			setEditingFixedCostId(null);
-			setEditingFixedCostData({
-				name: "",
-				amount: 0,
-				dueDay: 1,
-				isActive: true,
-			});
-		},
-	});
+const updateFixedCostMutation = useMutation({
+mutationFn: async ({ id, data }: any) => {
+const { data: res } = await api.put(`/fixed-costs/${id}`, data);
+return res;
+},
+onSuccess: () => {
+queryClient.invalidateQueries({ queryKey: ["fixed-costs"] });
+queryClient.invalidateQueries({
+queryKey: ["month-summary", year, month],
+});
+setEditingFixedCostId(null);
+setEditingFixedCostData({
+name: "",
+amount: 0,
+dueDay: 1,
+isActive: true,
+});
+},
+});
+
+const deleteFixedCostMutation = useMutation({
+mutationFn: async (id: string) => {
+await api.delete(`/fixed-costs/${id}`);
+},
+onSuccess: () => {
+queryClient.invalidateQueries({ queryKey: ["fixed-costs"] });
+queryClient.invalidateQueries({
+queryKey: ["month-summary", year, month],
+});
+setEditingFixedCostId(null);
+},
+onError: (error: any) => {
+alert("Erro ao excluir custo fixo: " + (error.response?.data?.error || error.message));
+},
+});
 
 const { data: topProducts, isLoading: loadingTop } = useQuery<TopProduct[]>(
 {
@@ -514,39 +530,49 @@ return response.data;
 												/>
 												Ativo
 											</label>
-											<div
-												className={
-													styles.fixedCostActions
-												}
-											>
-												<button
-													className={
-														styles.saveButton
-													}
-													onClick={() =>
-														updateFixedCostMutation.mutate(
-															{
-																id: fc.id,
-																data: editingFixedCostData,
-															},
-														)
-													}
-												>
-													Salvar
-												</button>
-												<button
-													className={
-														styles.cancelButton
-													}
-													onClick={() => {
-														setEditingFixedCostId(
-															null,
-														);
-													}}
-												>
-													Cancelar
-												</button>
-											</div>
+<div
+className={
+styles.fixedCostActions
+}
+>
+<button
+className={
+styles.saveButton
+}
+onClick={() =>
+updateFixedCostMutation.mutate(
+{
+id: fc.id,
+data: editingFixedCostData,
+},
+)
+}
+>
+Salvar
+</button>
+<button
+className={
+styles.cancelButton
+}
+onClick={() => {
+setEditingFixedCostId(
+null,
+);
+}}
+>
+Cancelar
+</button>
+<button
+className={styles.deleteButton}
+onClick={() => {
+if (confirm("Tem certeza que deseja excluir este custo fixo?")) {
+deleteFixedCostMutation.mutate(fc.id);
+}
+}}
+>
+Excluir
+</button>
+</div>
 										</div>
 									) : (
 										<div className={styles.fixedCostRow}>
