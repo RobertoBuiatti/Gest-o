@@ -1,9 +1,10 @@
 /* Stock Page - Cyberpunk Style */
 .container {
-	display: flex;
-	flex-direction: column;
-	gap: var(--spacing-lg);
-	padding-bottom: var(--spacing-2xl);
+display: flex;
+flex-direction: column;
+gap: var(--spacing-lg);
+padding: var(--spacing-md); /* mobile-first padding */
+box-sizing: border-box;
 }
 
 .header {
@@ -16,12 +17,14 @@
 }
 
 .tabs {
-	display: flex;
-	gap: var(--spacing-xs);
-	background: rgba(0, 0, 0, 0.4);
-	padding: var(--spacing-xs);
-	border-radius: var(--border-radius-lg);
-	border: 1px solid var(--border-color);
+display: flex;
+flex-wrap: wrap; /* permite quebra em telas pequenas */
+gap: var(--spacing-xs);
+background: rgba(0, 0, 0, 0.4);
+padding: calc(var(--spacing-xs) - 2px);
+border-radius: var(--border-radius-lg);
+border: 1px solid var(--border-color);
+justify-content: space-between;
 }
 
 .tab {
@@ -56,22 +59,24 @@
 }
 
 .addButton {
-	padding: var(--spacing-md) var(--spacing-lg);
-	background: rgba(0, 243, 255, 0.1);
-	color: var(--neon-blue);
-	border: 1px solid var(--neon-blue);
-	border-radius: var(--border-radius-md);
-	font-family: var(--font-mono);
-	font-weight: 600;
-	font-size: var(--font-size-sm);
-	display: flex;
-	align-items: center;
-	gap: var(--spacing-xs);
-	transition: all var(--transition-fast);
-	cursor: pointer;
-	min-height: 44px;
-	text-transform: uppercase;
-	letter-spacing: 1px;
+padding: var(--spacing-md) var(--spacing-lg);
+background: rgba(0, 243, 255, 0.1);
+color: var(--neon-blue);
+border: 1px solid var(--neon-blue);
+border-radius: var(--border-radius-md);
+font-family: var(--font-mono);
+font-weight: 600;
+font-size: var(--font-size-sm);
+display: flex;
+align-items: center;
+gap: var(--spacing-xs);
+transition: all var(--transition-fast);
+cursor: pointer;
+min-height: 44px;
+text-transform: uppercase;
+letter-spacing: 1px;
+width: 100%; /* full-width mobile-first */
+box-sizing: border-box;
 }
 
 .addButton:hover {
@@ -108,12 +113,13 @@
 }
 
 .sectorCard {
-	background: rgba(20, 20, 25, 0.8);
-	border-radius: var(--border-radius-lg);
-	padding: var(--spacing-lg);
-	border: 1px solid var(--border-color);
-	backdrop-filter: blur(5px);
-	transition: all var(--transition-fast);
+background: rgba(20, 20, 25, 0.8);
+border-radius: var(--border-radius-lg);
+padding: var(--spacing-md); /* menor padding em mobile */
+border: 1px solid var(--border-color);
+backdrop-filter: blur(5px);
+transition: all var(--transition-fast);
+box-sizing: border-box;
 }
 
 .sectorCard:hover {
@@ -300,18 +306,18 @@
 }
 
 .iconButton {
-	width: 36px;
-	height: 36px;
-	background: transparent;
-	border: 1px solid var(--border-color);
-	border-radius: var(--border-radius-sm);
-	cursor: pointer;
-	transition: all var(--transition-fast);
-	display: flex;
-	align-items: center;
-	justify-content: center;
-	color: var(--text-secondary);
-	font-size: 1.1rem;
+width: 44px; /* touch-friendly */
+height: 44px;
+background: transparent;
+border: 1px solid var(--border-color);
+border-radius: var(--border-radius-sm);
+cursor: pointer;
+transition: all var(--transition-fast);
+display: flex;
+align-items: center;
+justify-content: center;
+color: var(--text-secondary);
+font-size: 1.1rem;
 }
 
 .iconButton:hover {
@@ -342,13 +348,14 @@
 }
 
 .modalContent {
-	background: var(--bg-card);
-	border: 1px solid var(--neon-blue);
-	border-radius: var(--border-radius-lg);
-	padding: var(--spacing-xl);
-	width: 100%;
-	max-width: 450px;
-	box-shadow: 0 0 30px rgba(0, 243, 255, 0.15);
+background: var(--bg-card);
+border: 1px solid var(--neon-blue);
+border-radius: var(--border-radius-lg);
+padding: var(--spacing-md); /* padding reduzido em mobile */
+width: 100%;
+max-width: 100%;
+box-shadow: 0 0 30px rgba(0, 243, 255, 0.15);
+box-sizing: border-box;
 }
 
 .modalHeader {
@@ -468,15 +475,31 @@
 
 /* Desktop Responsive */
 @media (min-width: 640px) {
-	.sectorsGrid {
-		grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
-	}
+.sectorsGrid {
+grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+}
 
-	.categoriesGrid {
-		grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-	}
+.categoriesGrid {
+grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+}
 
-	.formRow {
-		grid-template-columns: 1fr 1fr;
-	}
+.formRow {
+grid-template-columns: 1fr 1fr;
+}
+
+/* Restaurar estilos para telas maiores */
+.addButton {
+width: auto;
+}
+.iconButton {
+width: 36px;
+height: 36px;
+}
+.sectorCard {
+padding: var(--spacing-lg);
+}
+.modalContent {
+max-width: 450px;
+padding: var(--spacing-xl);
+}
 }

@@ -1,10 +1,11 @@
 /* Orders Page - Cyberpunk Kanban Style */
 .container {
-	display: flex;
-	flex-direction: column;
-	gap: var(--spacing-lg);
-	height: calc(100vh - 100px);
-	padding-bottom: var(--spacing-md);
+display: flex;
+flex-direction: column;
+gap: var(--spacing-lg);
+height: calc(100vh - 100px);
+padding: var(--spacing-md); /* mobile-first padding */
+box-sizing: border-box;
 }
 
 .header {
@@ -27,14 +28,15 @@
 }
 
 .select {
-	padding: var(--spacing-sm) var(--spacing-md);
-	border: 1px solid var(--border-color);
-	border-radius: var(--border-radius-md);
-	background: rgba(0, 0, 0, 0.5);
-	font-family: var(--font-mono);
-	font-size: var(--font-size-sm);
-	color: var(--text-primary);
-	min-width: 150px;
+padding: var(--spacing-sm) var(--spacing-md);
+border: 1px solid var(--border-color);
+border-radius: var(--border-radius-md);
+background: rgba(0, 0, 0, 0.5);
+font-family: var(--font-mono);
+font-size: var(--font-size-sm);
+color: var(--text-primary);
+min-width: 0; /* permite encolher em telas pequenas */
+box-sizing: border-box;
 }
 
 .select:focus {
@@ -44,23 +46,25 @@
 }
 
 .newButton {
-	padding: var(--spacing-md) var(--spacing-lg);
-	background: rgba(0, 243, 255, 0.1);
-	color: var(--neon-blue);
-	border: 1px solid var(--neon-blue);
-	border-radius: var(--border-radius-md);
-	font-family: var(--font-mono);
-	font-weight: 600;
-	text-decoration: none;
-	font-size: var(--font-size-sm);
-	display: flex;
-	align-items: center;
-	justify-content: center;
-	min-height: 44px;
-	text-transform: uppercase;
-	letter-spacing: 1px;
-	gap: var(--spacing-sm);
-	transition: all var(--transition-fast);
+padding: var(--spacing-md) var(--spacing-lg);
+background: rgba(0, 243, 255, 0.1);
+color: var(--neon-blue);
+border: 1px solid var(--neon-blue);
+border-radius: var(--border-radius-md);
+font-family: var(--font-mono);
+font-weight: 600;
+text-decoration: none;
+font-size: var(--font-size-sm);
+display: flex;
+align-items: center;
+justify-content: center;
+min-height: 44px;
+text-transform: uppercase;
+letter-spacing: 1px;
+gap: var(--spacing-sm);
+transition: all var(--transition-fast);
+width: 100%; /* full-width mobile-first */
+box-sizing: border-box;
 }
 
 .newButton:hover {
@@ -81,14 +85,14 @@
 }
 
 .kanbanColumn {
-	background: rgba(10, 10, 15, 0.6);
-	border: 1px solid var(--border-color);
-	border-radius: var(--border-radius-lg);
-	display: flex;
-	flex-direction: column;
-	max-height: 500px;
-	backdrop-filter: blur(5px);
-	transition: border-color var(--transition-fast);
+background: rgba(10, 10, 15, 0.6);
+border: 1px solid var(--border-color);
+border-radius: var(--border-radius-lg);
+display: flex;
+flex-direction: column;
+max-height: none; /* mobile: permitir altura natural */
+backdrop-filter: blur(5px);
+transition: border-color var(--transition-fast);
 }
 
 .kanbanColumn:hover {
@@ -259,17 +263,17 @@
 
 .advanceBtn,
 .cancelBtn {
-	width: 32px;
-	height: 32px;
-	background: transparent;
-	border: 1px solid var(--border-color);
-	border-radius: var(--border-radius-sm);
-	cursor: pointer;
-	display: flex;
-	align-items: center;
-	justify-content: center;
-	transition: all var(--transition-fast);
-	font-size: 1rem;
+width: 44px; /* touch-friendly */
+height: 44px;
+background: transparent;
+border: 1px solid var(--border-color);
+border-radius: var(--border-radius-sm);
+cursor: pointer;
+display: flex;
+align-items: center;
+justify-content: center;
+transition: all var(--transition-fast);
+font-size: 1.1rem;
 }
 
 .advanceBtn {
@@ -316,14 +320,16 @@
 }
 
 .modalContent {
-	background: var(--bg-card);
-	border: 1px solid var(--neon-blue);
-	border-radius: var(--border-radius-lg);
-	width: 100%;
-	max-width: 500px;
-	max-height: 90vh;
-	overflow-y: auto;
-	box-shadow: 0 0 30px rgba(0, 243, 255, 0.15);
+background: var(--bg-card);
+border: 1px solid var(--neon-blue);
+border-radius: var(--border-radius-lg);
+width: 100%;
+max-width: 520px; /* leve ajuste para telas maiores */
+max-height: 90vh;
+overflow-y: auto;
+box-shadow: 0 0 30px rgba(0, 243, 255, 0.15);
+padding: var(--spacing-md); /* reduzir padding em mobile */
+box-sizing: border-box;
 }
 
 .modalHeader {

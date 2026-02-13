@@ -1,177 +1,212 @@
-/* Login - CSS Module */
+/* Mobile-first Login - CSS Module */
 .container {
-	min-height: 100vh;
-	display: flex;
-	align-items: center;
-	justify-content: center;
-	background: var(--bg-primary);
-	background-image:
-		linear-gradient(rgba(0, 243, 255, 0.02) 1px, transparent 1px),
-		linear-gradient(90deg, rgba(0, 243, 255, 0.02) 1px, transparent 1px);
-	background-size: 30px 30px;
-	padding: var(--spacing-lg);
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg-primary);
+  background-image:
+    linear-gradient(rgba(0, 243, 255, 0.02) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0, 243, 255, 0.02) 1px, transparent 1px);
+  background-size: 30px 30px;
+  padding: var(--spacing-md); /* menor padding por padrão (mobile-first) */
 }
 
 .card {
-	background: rgba(10, 10, 15, 0.7);
-	border: 1px solid var(--border-color);
-	border-radius: var(--border-radius-lg);
-	padding: var(--spacing-2xl);
-	width: 100%;
-	max-width: 400px;
-	box-shadow: 0 0 30px rgba(0, 0, 0, 0.5);
-	backdrop-filter: blur(10px);
-	position: relative;
-	overflow: hidden;
+  background: rgba(10, 10, 15, 0.7);
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius-lg);
+  padding: var(--spacing-lg); /* menor padding por padrão (mobile) */
+  width: 100%;
+  max-width: 400px;
+  box-shadow: 0 0 30px rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(10px);
+  position: relative;
+  overflow: hidden;
 }
 
 .card::before {
-	content: "";
-	position: absolute;
-	top: 0;
-	left: 0;
-	width: 100%;
-	height: 2px;
-	background: linear-gradient(
-		90deg,
-		transparent,
-		var(--neon-blue),
-		transparent
-	);
-	animation: scanline 3s infinite linear;
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 2px;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    var(--neon-blue),
+    transparent
+  );
+  animation: scanline 3s infinite linear;
 }
 
 @keyframes scanline {
-	0% {
-		transform: translateX(-100%);
-	}
-	100% {
-		transform: translateX(100%);
-	}
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
 }
 
 .logo {
-	text-align: center;
-	margin-bottom: var(--spacing-xl);
+  text-align: center;
+  margin-bottom: var(--spacing-lg);
 }
 
 .logoText {
-	font-family: var(--font-family);
-	font-size: var(--font-size-2xl);
-	font-weight: 700;
-	color: var(--neon-blue);
-	text-transform: uppercase;
-	letter-spacing: 2px;
-	text-shadow: 0 0 10px rgba(0, 243, 255, 0.5);
+  font-family: var(--font-family);
+  font-size: var(--font-size-xl); /* tamanho base acessível em mobile */
+  font-weight: 700;
+  color: var(--neon-blue);
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  text-shadow: 0 0 10px rgba(0, 243, 255, 0.5);
 }
 
 .logoSubtext {
-	font-family: var(--font-mono);
-	color: var(--neon-pink);
-	font-size: var(--font-size-sm);
-	margin-top: var(--spacing-xs);
-	text-transform: uppercase;
-	letter-spacing: 1px;
+  font-family: var(--font-mono);
+  color: var(--neon-pink);
+  font-size: var(--font-size-sm);
+  margin-top: var(--spacing-xs);
+  text-transform: uppercase;
+  letter-spacing: 1px;
 }
 
 .form {
-	display: flex;
-	flex-direction: column;
-	gap: var(--spacing-md);
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm); /* gap menor no mobile */
 }
 
 .field {
-	display: flex;
-	flex-direction: column;
-	gap: var(--spacing-xs);
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xs);
 }
 
 .label {
-	font-family: var(--font-mono);
-	font-size: var(--font-size-sm);
-	font-weight: 500;
-	color: var(--text-primary);
-	text-transform: uppercase;
+  font-family: var(--font-mono);
+  font-size: var(--font-size-sm);
+  font-weight: 500;
+  color: var(--text-primary);
+  text-transform: uppercase;
 }
 
 .input {
-	padding: var(--spacing-sm) var(--spacing-md);
-	background: rgba(0, 0, 0, 0.3);
-	border: 1px solid var(--border-color);
-	border-radius: var(--border-radius-sm);
-	font-size: var(--font-size-md);
-	color: var(--text-primary);
-	transition: all var(--transition-fast);
-	font-family: var(--font-mono);
+  padding: calc(var(--spacing-sm) + 4px) var(--spacing-md);
+  background: rgba(0, 0, 0, 0.3);
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius-sm);
+  font-size: var(--font-size-md);
+  color: var(--text-primary);
+  transition: all var(--transition-fast);
+  font-family: var(--font-mono);
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .input:focus {
-	outline: none;
-	border-color: var(--neon-blue);
-	box-shadow: 0 0 10px rgba(0, 243, 255, 0.2);
+  outline: none;
+  border-color: var(--neon-blue);
+  box-shadow: 0 0 10px rgba(0, 243, 255, 0.2);
 }
 
 .button {
-	padding: var(--spacing-md);
-	background: rgba(0, 243, 255, 0.1);
-	color: var(--neon-blue);
-	border: 1px solid var(--neon-blue);
-	border-radius: var(--border-radius-sm);
-	font-family: var(--font-mono);
-	font-size: var(--font-size-md);
-	font-weight: 600;
-	text-transform: uppercase;
-	letter-spacing: 1px;
-	transition: all var(--transition-fast);
-	margin-top: var(--spacing-sm);
-	cursor: pointer;
+  padding: var(--spacing-md);
+  background: rgba(0, 243, 255, 0.1);
+  color: var(--neon-blue);
+  border: 1px solid var(--neon-blue);
+  border-radius: var(--border-radius-sm);
+  font-family: var(--font-mono);
+  font-size: var(--font-size-md);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  transition: all var(--transition-fast);
+  margin-top: var(--spacing-sm);
+  cursor: pointer;
+  width: 100%; /* full-width em mobile para touch-friendly */
+  box-sizing: border-box;
 }
 
 .button:hover {
-	background: var(--neon-blue);
-	color: #000;
-	box-shadow: 0 0 20px rgba(0, 243, 255, 0.4);
+  background: var(--neon-blue);
+  color: #000;
+  box-shadow: 0 0 20px rgba(0, 243, 255, 0.4);
 }
 
 .button:disabled {
-	background: var(--gray-600);
-	border-color: var(--gray-600);
-	color: var(--text-muted);
-	cursor: not-allowed;
-	box-shadow: none;
+  background: var(--gray-600);
+  border-color: var(--gray-600);
+  color: var(--text-muted);
+  cursor: not-allowed;
+  box-shadow: none;
 }
 
 .error {
-	background: rgba(255, 42, 109, 0.1);
-	color: var(--danger-500);
-	padding: var(--spacing-sm) var(--spacing-md);
-	border: 1px solid rgba(255, 42, 109, 0.3);
-	border-radius: var(--border-radius-sm);
-	font-size: var(--font-size-sm);
-	text-align: center;
-	font-family: var(--font-mono);
+  background: rgba(255, 42, 109, 0.1);
+  color: var(--danger-500);
+  padding: var(--spacing-sm) var(--spacing-md);
+  border: 1px solid rgba(255, 42, 109, 0.3);
+  border-radius: var(--border-radius-sm);
+  font-size: var(--font-size-sm);
+  text-align: center;
+  font-family: var(--font-mono);
 }
 
 .demo {
-	margin-top: var(--spacing-lg);
-	padding-top: var(--spacing-lg);
-	border-top: 1px solid var(--border-color);
-	text-align: center;
+  margin-top: var(--spacing-lg);
+  padding-top: var(--spacing-lg);
+  border-top: 1px solid var(--border-color);
+  text-align: center;
 }
 
 .demoText {
-	font-size: var(--font-size-sm);
-	color: var(--text-secondary);
-	font-family: var(--font-mono);
+  font-size: var(--font-size-sm);
+  color: var(--text-secondary);
+  font-family: var(--font-mono);
 }
 
 .demoCredentials {
-	font-size: var(--font-size-sm);
-	color: var(--neon-green);
-	font-family: var(--font-mono);
-	background: rgba(0, 0, 0, 0.3);
-	padding: var(--spacing-sm);
-	border-radius: var(--border-radius-sm);
-	margin-top: var(--spacing-sm);
-	border: 1px solid var(--border-color);
+  font-size: var(--font-size-sm);
+  color: var(--neon-green);
+  font-family: var(--font-mono);
+  background: rgba(0, 0, 0, 0.3);
+  padding: var(--spacing-sm);
+  border-radius: var(--border-radius-sm);
+  margin-top: var(--spacing-sm);
+  border: 1px solid var(--border-color);
+}
+
+/* Larger screens (tablet/desktop) */
+@media (min-width: 768px) {
+  .container {
+    padding: var(--spacing-lg);
+  }
+
+  .card {
+    padding: var(--spacing-2xl);
+    max-width: 480px;
+  }
+
+  .logoText {
+    font-size: var(--font-size-2xl);
+  }
+
+  .form {
+    gap: var(--spacing-md);
+  }
+
+  .button {
+    width: auto;
+    min-width: 220px;
+    align-self: center; /* botão centralizado em telas maiores */
+    padding: calc(var(--spacing-md) + 4px);
+  }
+
+  .demo {
+    margin-top: calc(var(--spacing-lg) + var(--spacing-sm));
+  }
 }
