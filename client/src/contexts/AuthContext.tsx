@@ -26,6 +26,11 @@ interface AuthContextData extends AuthState {
 		email: string,
 		password: string,
 	) => Promise<{ success: boolean; error?: string }>;
+	register: (
+		name: string,
+		email: string,
+		password: string,
+	) => Promise<{ success: boolean; error?: string }>;
 	logout: () => void;
 }
 
@@ -103,6 +108,39 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 		}
 	}, []);
 
+	const register = useCallback(
+		async (name: string, email: string, password: string) => {
+			try {
+				const response = await api.post("/auth/register", {
+					name,
+					email,
+					password,
+				});
+				const { token, user } = response.data;
+
+				localStorage.setItem("token", token);
+				localStorage.setItem("user", JSON.stringify(user));
+
+				setData({
+					user,
+					token,
+					isAuthenticated: true,
+					isLoading: false,
+				});
+
+				return { success: true };
+			} catch (error: any) {
+				return {
+					success: false,
+					error:
+						error.response?.data?.error ||
+						"Erro ao realizar cadastro",
+				};
+			}
+		},
+		[],
+	);
+
 	const logout = useCallback(() => {
 		localStorage.removeItem("token");
 		localStorage.removeItem("user");
@@ -115,7 +153,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 	}, []);
 
 	return (
-		<AuthContext.Provider value={{ ...data, login, logout }}>
+		<AuthContext.Provider value={{ ...data, login, register, logout }}>
 			{children}
 		</AuthContext.Provider>
 	);

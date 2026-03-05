@@ -1,14 +1,14 @@
 import { Router } from "express";
 import { systemMiddleware } from "../middlewares/system.middleware";
-import authRoutes from "./auth.routes";
-import orderRoutes from "./order.routes";
-import stockRoutes from "./stock.routes";
+import authRoutes from "../modules/auth/presentation/auth.routes";
+import { orderRouter } from "../modules/orders/presentation/routes/order.routes";
+import { productRouter } from "../modules/products/presentation/routes/product.routes";
+import { stockRouter } from "../modules/stock/presentation/routes/stock.routes";
 import webhookRoutes from "./webhook.routes";
-import productRoutes from "./product.routes";
 import publicRoutes from "./public.routes";
 import uploadRoutes from "./upload.routes";
 import reportRoutes from "./report.routes";
-import farmRoutes from "./farm.routes";
+import { farmRouter } from "../modules/farm/presentation/routes/farm.routes";
 import salonRoutes from "./salon.routes";
 import fixedCostRoutes from "./fixed-cost.routes";
 
@@ -18,16 +18,16 @@ const router = Router();
 router.use(systemMiddleware);
 
 router.use("/auth", authRoutes);
-router.use("/orders", orderRoutes);
-router.use("/stock", stockRoutes);
+router.use("/orders", orderRouter);
+router.use("/stock", stockRouter);
 router.use("/webhooks", webhookRoutes);
 router.use("/public", publicRoutes);
 router.use("/upload", uploadRoutes);
 router.use("/reports", reportRoutes);
 router.use("/fixed-costs", fixedCostRoutes);
-router.use("/farm", farmRoutes);
+router.use("/farm", farmRouter);
 router.use("/salon", salonRoutes);
-router.use("/", productRoutes);
+router.use("/", productRouter);
 
 // Health check
 router.get("/health", (req, res) => {

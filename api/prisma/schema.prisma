@@ -283,6 +283,7 @@ model Farm {
   products  FarmProduct[]
   crops     Crop[]
   animals   Animal[]
+  fishTanks FishTank[]
   farmActivities FarmActivity[]
   system    String    @default("fazenda")
   createdAt DateTime  @default(now())
@@ -310,6 +311,8 @@ model Crop {
   name         String
   variety      String?
   area         Float?    // hectares
+  submodule    String    @default("AGRICULTURA") // AGRICULTURA ou HORTICULTURA
+  status       String    @default("PLANTED") // PLANTED, HARVESTING, COMPLETED, CANCELLED
   plantedAt    DateTime?
   harvestedAt  DateTime?
   expectedYield Float?
@@ -325,13 +328,33 @@ model Animal {
   farm      Farm      @relation(fields: [farmId], references: [id])
   name      String?
   tag       String?   @unique
-  type      String    // ex: COW, SHEEP, PIG, CHICKEN
+  type      String    // ex: COW, SHEEP, PIG, CHICKEN, FISH
+  submodule String    @default("PECUARIA") // PECUARIA, GRANJA, PISCICULTURA
+  gender    String?   // MALE, FEMALE
+  weight    Float?
   birthDate DateTime?
-  status    String    @default("ACTIVE") // ACTIVE, SOLD, DECEASED
+  status    String    @default("ACTIVE") // ACTIVE, SOLD, DECEASED, QUARANTINE
   notes     String?
   system    String    @default("fazenda")
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
+}
+
+model FishTank {
+  id          String   @id @default(uuid())
+  farmId      String
+  farm        Farm     @relation(fields: [farmId], references: [id])
+  name        String
+  capacity    Float    // Volume em litros ou m3
+  ph          Float?
+  temperature Float?
+  species     String?
+  quantity    Int      @default(0)
+  status      String   @default("ACTIVE")
+  notes       String?
+  system      String   @default("fazenda")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 }
 
 model FeedRequirement {
@@ -350,7 +373,8 @@ model FarmActivity {
   id         String   @id @default(uuid())
   farmId     String
   farm       Farm     @relation(fields: [farmId], references: [id])
-  type       String   // PLANTING, HARVEST, BIRTH, SALE, FEEDING, TREATMENT
+  type       String   // PLANTING, HARVEST, BIRTH, SALE, FEEDING, TREATMENT, TRANSFER
+  submodule  String?  // PECUARIA, AGRICULTURA, PISCICULTURA, GRANJA, HORTICULTURA
   referenceId String?
   description String?
   recordedAt DateTime @default(now())

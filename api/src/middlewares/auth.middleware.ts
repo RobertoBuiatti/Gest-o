@@ -18,9 +18,9 @@ interface JwtPayload {
 }
 
 export async function authMiddleware(
-  req: AuthRequest,
-  res: Response,
-  next: NextFunction,
+	req: AuthRequest,
+	res: Response,
+	next: NextFunction,
 ) {
 	const authHeader = req.headers.authorization;
 
@@ -30,33 +30,35 @@ export async function authMiddleware(
 
 	const [, token] = authHeader.split(" ");
 
-  try {
-    const decoded = jwt.verify(
-      token,
-      process.env.JWT_SECRET || "default-secret",
-    ) as JwtPayload;
+	try {
+		const decoded = jwt.verify(
+			token,
+			process.env.JWT_SECRET || "default-secret",
+		) as JwtPayload;
 
-    // Verificar se o usuário ainda existe no banco
-    const user = await prisma.user.findUnique({
-      where: { id: decoded.userId },
-    });
+		// Verificar se o usuário ainda existe no banco
+		const user = await prisma.user.findUnique({
+			where: { id: decoded.userId },
+		});
 
-    if (!user) {
-      return res
-        .status(401)
-        .json({ error: "Usuário não encontrado. Faça login novamente." });
-    }
+		if (!user) {
+			return res
+				.status(401)
+				.json({
+					error: "Usuário não encontrado. Faça login novamente.",
+				});
+		}
 
-    req.user = {
-      id: user.id,
-      email: user.email,
-      role: user.role,
-    };
+		req.user = {
+			id: user.id,
+			email: user.email,
+			role: user.role,
+		};
 
-    return next();
-  } catch (error) {
-    return res.status(401).json({ error: "Token inválido" });
-  }
+		return next();
+	} catch (error) {
+		return res.status(401).json({ error: "Token inválido" });
+	}
 }
 
 // Middleware para verificar roles específicas
@@ -72,17 +74,4 @@ export function requireRole(...allowedRoles: string[]) {
 
 		return next();
 	};
-}
-
-// Função para gerar token JWT
-export function generateToken(user: {
-	id: string;
-	email: string;
-	role: string;
-}): string {
-	return jwt.sign(
-		{ userId: user.id, email: user.email, role: user.role },
-		process.env.JWT_SECRET || "default-secret",
-		{ expiresIn: "7d" },
-	);
 }

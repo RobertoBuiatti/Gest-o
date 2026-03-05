@@ -1,7 +1,8 @@
 // Service de Autenticação
 import bcrypt from "bcryptjs";
 import { prisma } from "../config/database";
-import { generateToken } from "../middlewares/auth.middleware";
+import { SecurityService } from "../modules/auth/infra/security.service";
+const securityService = new SecurityService();
 import Logger from "../config/logger";
 
 interface RegisterInput {
@@ -49,7 +50,11 @@ export class AuthService {
 			},
 		});
 
-		const token = generateToken(user);
+		const token = securityService.generateToken({
+			userId: user.id,
+			email: user.email,
+			role: user.role,
+		});
 
 		return {
 			success: true,
@@ -96,7 +101,11 @@ export class AuthService {
 
 		Logger.info(`Login realizado com sucesso: ${input.email}`);
 
-		const token = generateToken(user);
+		const token = securityService.generateToken({
+			userId: user.id,
+			email: user.email,
+			role: user.role,
+		});
 
 		return {
 			success: true,

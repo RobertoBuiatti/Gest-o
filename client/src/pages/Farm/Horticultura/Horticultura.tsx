@@ -1,0 +1,96 @@
+import { useState } from "react";
+import { useFarm } from "../../../hooks/useFarm";
+import styles from "./Horticultura.module.css";
+
+const FARM_ID = "default-farm";
+
+export function Horticultura() {
+	const { useHorticulture, useCreateHorticultureCrop } = useFarm();
+	const { data: crops, isLoading } = useHorticulture(FARM_ID);
+	const createCropMutation = useCreateHorticultureCrop();
+
+	const [formData, setFormData] = useState({
+		name: "",
+		area: "",
+	});
+
+	const handleSubmit = async (e: React.FormEvent) => {
+		e.preventDefault();
+		try {
+			await createCropMutation.mutateAsync({
+				...formData,
+				farmId: FARM_ID,
+				submodule: "HORTICULTURA",
+				status: "PLANTED",
+			});
+			setFormData({ name: "", area: "" });
+		} catch (err) {
+			console.error(err);
+		}
+	};
+
+	return (
+		<div className={styles.container}>
+			<header className={styles.header}>
+				<h2>🥬 Horticultura</h2>
+				<p>Gestão de Hortas e Cultivos Menores</p>
+			</header>
+
+			<section className={styles.card}>
+				<h3>Novo Canteiro/Cultura</h3>
+				<form onSubmit={handleSubmit} className={styles.form}>
+					<input
+						type="text"
+						placeholder="Ex: Alface Crespa"
+						value={formData.name}
+						onChange={(e) =>
+							setFormData({ ...formData, name: e.target.value })
+						}
+						required
+					/>
+					<input
+						type="text"
+						placeholder="Área/Canteiro"
+						value={formData.area}
+						onChange={(e) =>
+							setFormData({ ...formData, area: e.target.value })
+						}
+					/>
+					<button
+						type="submit"
+						disabled={createCropMutation.isPending}
+					>
+						{createCropMutation.isPending
+							? "Salvando..."
+							: "Adicionar"}
+					</button>
+				</form>
+			</section>
+
+			<section className={styles.list}>
+				<h3>Canteiros Ativos</h3>
+				{isLoading ? (
+					<p>Carregando...</p>
+				) : (
+					<div className={styles.grid}>
+						{crops?.map((crop: any) => (
+							<div key={crop.id} className={styles.listItem}>
+								<div>
+									<strong>{crop.name}</strong>
+									<div className={styles.meta}>
+										<span>
+											Canteiro: {crop.area || "N/A"}
+										</span>
+									</div>
+								</div>
+								<span className={styles.statusBadge}>
+									{crop.status}
+								</span>
+							</div>
+						))}
+					</div>
+				)}
+			</section>
+		</div>
+	);
+}

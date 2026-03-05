@@ -1,5 +1,5 @@
 import { useState, FormEvent } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { useAuth } from "../../hooks/useAuth";
 import styles from "./Login.module.css";
 
@@ -80,6 +80,25 @@ export function Login() {
 					<div className={styles.demoCredentials}>
 						admin@email.com / admin123
 					</div>
+				</div>
+
+				<div
+					className={styles.footer}
+					style={{ marginTop: "20px", textAlign: "center" }}
+				>
+					<span style={{ color: "#64748b" }}>
+						Não tem uma conta?{" "}
+					</span>
+					<Link
+						to="/cadastro"
+						style={{
+							color: "#2563eb",
+							fontWeight: "600",
+							textDecoration: "none",
+						}}
+					>
+						Cadastre-se
+					</Link>
 				</div>
 			</div>
 		</div>
