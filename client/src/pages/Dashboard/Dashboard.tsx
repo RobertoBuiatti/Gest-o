@@ -105,7 +105,7 @@ export function Dashboard() {
 {isSalon ? (
 <>
 <Link
-to="/salao/agenda"
+to="/agenda"
 className={styles.quickActionCard}
 >
 <span className={styles.quickActionIcon}>📅</span>
@@ -114,7 +114,7 @@ Agenda
 </span>
 </Link>
 <Link
-to="/salao/clientes"
+to="/clientes"
 className={styles.quickActionCard}
 >
 <span className={styles.quickActionIcon}>👥</span>
@@ -123,7 +123,7 @@ Clientes
 </span>
 </Link>
 <Link
-to="/salao/servicos"
+to="/servicos"
 className={styles.quickActionCard}
 >
 <span className={styles.quickActionIcon}>✂️</span>
@@ -270,10 +270,10 @@ Estoque
 								<h2 className={styles.sectionTitle}>
 									📅 Agenda de Hoje
 								</h2>
-								<Link
-									to="/salao/agenda"
-									className={styles.sectionLink}
-								>
+<Link
+to="/agenda"
+className={styles.sectionLink}
+>
 									Ver Agenda →
 								</Link>
 							</div>

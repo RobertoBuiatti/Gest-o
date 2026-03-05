@@ -421,16 +421,164 @@ async function main() {
 		},
 	});
 
-	console.log("✅ Dados de salão criados:", servico.name);
+console.log("✅ Dados de salão criados:", servico.name);
 
-	console.log("🎉 Seed concluído com sucesso!");
+// ==================== DADOS FAZENDA ====================
+const fazenda = await prisma.farm.create({
+  data: {
+    name: "Fazenda São Bento",
+    location: "Interior - SP",
+    description: "Fazenda de produção mista (leite, aves e hortaliças)",
+    ownerId: admin.id,
+    system: "fazenda",
+  },
+});
+
+const farmProducts = await Promise.all([
+  prisma.farmProduct.create({
+    data: {
+      name: "Leite Fresco 1L",
+      description: "Leite pasteurizado da ordenha",
+      salePrice: 6.5,
+      quantityInStock: 200,
+      farmId: fazenda.id,
+      system: "fazenda",
+    },
+  }),
+  prisma.farmProduct.create({
+    data: {
+      name: "Ovos Caipira (dúzia)",
+      description: "Ovos produzidos por galinhas caipiras",
+      salePrice: 12.0,
+      quantityInStock: 150,
+      farmId: fazenda.id,
+      system: "fazenda",
+    },
+  }),
+  prisma.farmProduct.create({
+    data: {
+      name: "Milho (saca 20kg)",
+      description: "Milho para ração e venda",
+      salePrice: 45.0,
+      quantityInStock: 50,
+      farmId: fazenda.id,
+      system: "fazenda",
+    },
+  }),
+]);
+
+console.log("✅ Produtos da fazenda criados:", farmProducts.length);
+
+// Crops
+const crop1 = await prisma.crop.create({
+  data: {
+    farmId: fazenda.id,
+    name: "Milho Safra 2026",
+    variety: "Híbrido X",
+    area: 5.0,
+    plantedAt: new Date(),
+    expectedYield: 2500,
+    notes: "Plantio inicial da estação",
+    system: "fazenda",
+  },
+});
+
+console.log("✅ Lote de cultivo criado:", crop1.name);
+
+// Animals
+const animal1 = await prisma.animal.create({
+  data: {
+    farmId: fazenda.id,
+    name: "Vaca Mansa",
+    tag: "COW-001",
+    type: "COW",
+    birthDate: new Date(new Date().setFullYear(new Date().getFullYear() - 3)),
+    status: "ACTIVE",
+    notes: "Ordenha diária",
+    system: "fazenda",
+  },
+});
+
+const animal2 = await prisma.animal.create({
+  data: {
+    farmId: fazenda.id,
+    name: "Galinha Caipira 1",
+    tag: "HEN-001",
+    type: "CHICKEN",
+    birthDate: new Date(new Date().setFullYear(new Date().getFullYear() - 1)),
+    status: "ACTIVE",
+    notes: "Produção de ovos",
+    system: "fazenda",
+  },
+});
+
+console.log("✅ Animais criados:", 2);
+
+// Feed requirements (exemplo usando ingrediente 'Arroz' como ração base)
+await prisma.feedRequirement.createMany({
+  data: [
+    {
+      animalType: "COW",
+      ingredientId: arroz.id,
+      quantity: 5,
+      unit: "kg",
+      system: "fazenda",
+    },
+    {
+      animalType: "CHICKEN",
+      ingredientId: arroz.id,
+      quantity: 0.2,
+      unit: "kg",
+      system: "fazenda",
+    },
+  ],
+});
+
+console.log("✅ Requisitos de alimentação criados");
+
+// Register initial farm activities
+await prisma.farmActivity.create({
+  data: {
+    farmId: fazenda.id,
+    type: "PLANTING",
+    referenceId: crop1.id,
+    description: `Plantio: ${crop1.name}`,
+    system: "fazenda",
+  },
+});
+
+await prisma.farmActivity.create({
+  data: {
+    farmId: fazenda.id,
+    type: "BIRTH",
+    referenceId: animal2.id,
+    description: `Registro de animal: ${animal2.name}`,
+    system: "fazenda",
+  },
+});
+
+console.log("✅ Atividades da fazenda registradas");
+
+// Registra transação de entrada pela venda simulada inicial (exemplo)
+await prisma.transaction.create({
+  data: {
+    type: "INCOME",
+    amount: farmProducts[0].salePrice * 10, // venda inicial de 10 unidades de leite
+    fee: 0,
+    netAmount: farmProducts[0].salePrice * 10,
+    description: `Venda inicial: ${farmProducts[0].name}`,
+    system: "fazenda",
+  },
+});
+
+console.log("🎉 Seed concluído com sucesso!");
 }
 
 main()
-	.catch((e) => {
-		console.error("❌ Erro no seed:", e);
-		process.exit(1);
-	})
-	.finally(async () => {
-		await prisma.$disconnect();
-	});
+.catch((e) => {
+console.error("❌ Erro no seed:", e);
+process.exit(1);
+})
+.finally(async () => {
+await prisma.$disconnect();
+});

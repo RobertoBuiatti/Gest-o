@@ -12,6 +12,8 @@ import { Reports } from "./pages/Reports/Reports";
 import { Agenda } from "./pages/Salon/Agenda/Agenda";
 import { Clients } from "./pages/Salon/Clients/Clients";
 import { Services } from "./pages/Salon/Services/Services";
+import { FarmDashboard, FarmProducts, FarmCrops, FarmAnimals } from "./pages/Farm";
+import { Plantio, Colheita, Pecuaria, Piscicultura, Granja } from "./pages/Farm/AdditionalPages";
 import { useAuth } from "./hooks/useAuth";
 
 function App() {
@@ -59,10 +61,15 @@ function App() {
         <Route path="clientes" element={<Clients />} />
         <Route path="servicos" element={<Services />} />
 
-        {/* Rotas Fazenda (Placeholders por enquanto) */}
-        <Route path="plantio" element={<Dashboard />} />
-        <Route path="colheita" element={<Dashboard />} />
-        <Route path="gado" element={<Dashboard />} />
+        {/* Rotas Fazenda */}
+        <Route path="fazenda" element={<FarmDashboard />} />
+        <Route path="fazenda/produtos" element={<FarmProducts />} />
+        <Route path="fazenda/plantio" element={<Plantio />} />
+        <Route path="fazenda/colheita" element={<Colheita />} />
+        <Route path="fazenda/pecuaria" element={<Pecuaria />} />
+        <Route path="fazenda/piscicultura" element={<Piscicultura />} />
+        <Route path="fazenda/granja" element={<Granja />} />
+        <Route path="fazenda/animais" element={<FarmAnimals />} />
       </Route>
     </Routes>
   );

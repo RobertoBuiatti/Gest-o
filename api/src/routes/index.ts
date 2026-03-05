@@ -8,6 +8,7 @@ import productRoutes from "./product.routes";
 import publicRoutes from "./public.routes";
 import uploadRoutes from "./upload.routes";
 import reportRoutes from "./report.routes";
+import farmRoutes from "./farm.routes";
 import salonRoutes from "./salon.routes";
 import fixedCostRoutes from "./fixed-cost.routes";
 
@@ -24,6 +25,7 @@ router.use("/public", publicRoutes);
 router.use("/upload", uploadRoutes);
 router.use("/reports", reportRoutes);
 router.use("/fixed-costs", fixedCostRoutes);
+router.use("/farm", farmRoutes);
 router.use("/salon", salonRoutes);
 router.use("/", productRoutes);
 
